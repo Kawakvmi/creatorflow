@@ -85,7 +85,7 @@ export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: 
         stage: initialStage,
         priority,
         approvalStatus: "pending",
-        dueDate: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
+        dueDate: dueDate ? `${dueDate}T12:00:00.000Z` : new Date().toISOString(),
         checklist: buildChecklist(checklistItems),
         guidebook: [],
       });
@@ -160,7 +160,7 @@ export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: 
 
             {/* Data de entrega */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-white/50 uppercase tracking-wider font-semibold">Data de Entrega</Label>
+              <Label className="text-xs text-white/50 uppercase tracking-wider font-semibold">Data Prevista de Entrega</Label>
               <Input
                 type="date"
                 value={dueDate}

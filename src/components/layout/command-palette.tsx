@@ -90,7 +90,7 @@ export function CommandPalette() {
             {cards.slice(0, 8).map((card) => (
               <CommandItem
                 key={card.id}
-                onSelect={() => run(() => router.push(`/campaigns/${card.campaignId}`))}
+                onSelect={() => card.campaignId && run(() => router.push(`/campaigns/${card.campaignId}`))}
               >
                 <span className="mr-2">{contentTypeIcon[card.contentType]}</span>
                 {card.title}

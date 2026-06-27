@@ -55,7 +55,7 @@ export interface GuidebookBlock {
 
 export interface Card {
   id: string;
-  campaignId: string;
+  campaignId: string | null;
   title: string;
   description: string;
   contentType: ContentType;
@@ -63,6 +63,7 @@ export interface Card {
   priority: "low" | "medium" | "high";
   approvalStatus: ApprovalStatus;
   dueDate: string;
+  actualDeliveryDate?: string | null;
   coverImageId?: string;
   checklist: ChecklistItem[];
   guidebook: GuidebookBlock[];

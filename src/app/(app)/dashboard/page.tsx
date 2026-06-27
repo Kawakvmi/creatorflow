@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCreatorStore } from "@/lib/store/useCreatorStore";
 import {
@@ -109,7 +110,7 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
   const campaigns = useCreatorStore((s) => s.campaigns).filter((c) => !c.archived);
   const addCard   = useCreatorStore((s) => s.addCard);
 
-  const [campaignId,      setCampaignId]      = useState(campaigns[0]?.id ?? "");
+  const [campaignId,      setCampaignId]      = useState("");
   const [title,           setTitle]           = useState("");
   const [description,     setDescription]     = useState("");
   const [contentType,     setContentType]     = useState<ContentType>("video");
@@ -144,25 +145,25 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
   const reset = () => {
     setTitle(""); setDescription(""); setContentType("video");
     setPriority("medium"); setDueDate("");
-    setCampaignId(campaigns[0]?.id ?? "");
+    setCampaignId("");
     setChecklistItems(checklistTemplates["video"]);
     setEditChecklist(false); setNewItemLabel("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !campaignId) return;
+    if (!title.trim()) return;
     setSubmitting(true);
     try {
       const created = await db.createCard({
-        campaignId,
+        campaignId: campaignId || null,
         title: title.trim(),
         description: description.trim(),
         contentType,
         stage: "script",
         priority,
         approvalStatus: "pending",
-        dueDate: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
+        dueDate: dueDate ? `${dueDate}T12:00:00.000Z` : new Date().toISOString(),
         checklist: checklistItems.filter(l => l.trim()).map((label, i) => ({
           id: `q-${i}-${crypto.randomUUID()}`, label, done: false,
         })),
@@ -236,8 +237,11 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Campanha */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Campanha</Label>
-                  <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={selectCls} required>
+                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                    Campanha <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span>
+                  </Label>
+                  <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={selectCls}>
+                    <option value="" style={{ background: "#18181b" }}>— Sem campanha —</option>
                     {campaigns.map((c) => (
                       <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
                     ))}
@@ -293,7 +297,7 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
 
                 {/* Data de entrega */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Data de Entrega</Label>
+                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Data Prevista de Entrega</Label>
                   <Input
                     type="date"
                     value={dueDate}
@@ -408,6 +412,7 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
    Dashboard Page
 ───────────────────────────────────────────────────────── */
 export default function DashboardPage() {
+  const router    = useRouter();
   const campaigns = useCreatorStore((s) => s.campaigns);
   const cards     = useCreatorStore((s) => s.cards);
 
@@ -536,30 +541,55 @@ export default function DashboardPage() {
 
           {/* ── KPI Cards — glassmorphism ───────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiConfig.map((kpi, i) => (
-              <motion.div
-                key={kpi.key}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07, duration: 0.4 }}
-              >
-                <div className={`relative rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl overflow-hidden shadow-lg ${kpi.glow} hover:border-white/[0.14] transition-all duration-300 group`}>
-                  {/* Linha colorida no topo */}
-                  <div className={`h-0.5 w-full bg-gradient-to-r ${kpi.gradient}`} />
-                  {/* Glow sutil no canto */}
-                  <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br ${kpi.gradient} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
-                  <div className="p-5 flex items-center gap-4 relative">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${kpi.iconBg} flex items-center justify-center shadow-md shrink-0`}>
-                      <kpi.icon className="w-6 h-6 text-white" />
+            {kpiConfig.map((kpi, i) => {
+              const isCompleted = kpi.key === "completedThisMonth";
+              return (
+                <motion.div
+                  key={kpi.key}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.07, duration: 0.4 }}
+                  onClick={isCompleted ? () => router.push("/completed") : undefined}
+                  className={isCompleted ? "cursor-pointer" : undefined}
+                >
+                  <motion.div
+                    className={`relative rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 group backdrop-blur-xl
+                      ${isCompleted
+                        ? "border-emerald-500/30 bg-white/[0.04] hover:border-emerald-400/60"
+                        : `border-white/[0.08] bg-white/[0.04] ${kpi.glow} hover:border-white/[0.14]`
+                      }`}
+                    animate={isCompleted ? {
+                      boxShadow: [
+                        "0 0 8px rgba(16,185,129,0.15), 0 0 20px rgba(16,185,129,0.06)",
+                        "0 0 16px rgba(16,185,129,0.35), 0 0 40px rgba(16,185,129,0.14)",
+                        "0 0 8px rgba(16,185,129,0.15), 0 0 20px rgba(16,185,129,0.06)",
+                      ]
+                    } : {}}
+                    transition={isCompleted ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" } : {}}
+                    whileHover={isCompleted ? {
+                      boxShadow: "0 0 20px rgba(16,185,129,0.5), 0 0 50px rgba(16,185,129,0.20)"
+                    } : {}}
+                  >
+                    {/* Linha colorida no topo */}
+                    <div className={`h-0.5 w-full bg-gradient-to-r ${kpi.gradient}`} />
+                    {/* Glow sutil no canto */}
+                    <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br ${kpi.gradient} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
+                    <div className="p-5 flex items-center gap-4 relative">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${kpi.iconBg} flex items-center justify-center shadow-md shrink-0`}>
+                        <kpi.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-muted-foreground truncate">{kpi.title}</p>
+                        <h3 className="text-3xl font-bold mt-0.5 leading-none">{kpiValues[kpi.key]}</h3>
+                        {isCompleted && (
+                          <p className="text-[10px] text-emerald-400/70 mt-1 font-medium">Ver todos →</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground truncate">{kpi.title}</p>
-                      <h3 className="text-3xl font-bold mt-0.5 leading-none">{kpiValues[kpi.key]}</h3>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                  </motion.div>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* ── Demandas Ativas ───────────────────────────── */}

@@ -51,7 +51,8 @@ export const useCreatorStore = create<CreatorState>()((set, get) => ({
   removeCampaign: (id) =>
     set((s) => ({
       campaigns: s.campaigns.filter((c) => c.id !== id),
-      cards:     s.cards.filter((c) => c.campaignId !== id),
+      // campaign_id is SET NULL on delete in DB — mirror that in the store
+      cards: s.cards.map((c) => c.campaignId === id ? { ...c, campaignId: null } : c),
     })),
 
   addCard: (card) =>

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Megaphone, Calendar, Settings } from "lucide-react";
+import { LayoutDashboard, Megaphone, Calendar, CheckCircle2, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Campanhas", href: "/campaigns", icon: Megaphone },
-  { name: "Calendário", href: "/calendar", icon: Calendar },
+  { name: "Calendário", href: "/calendar",  icon: Calendar },
+  { name: "Concluídos", href: "/completed", icon: CheckCircle2 },
   { name: "Config",     href: "/settings",  icon: Settings },
 ];
 

@@ -7,6 +7,7 @@
 create table if not exists public.profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
   name       text,
+  username   text unique,
   avatar_url text,
   created_at timestamptz default now()
 );
@@ -15,8 +16,12 @@ create table if not exists public.profiles (
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
 begin
-  insert into public.profiles (id, name)
-  values (new.id, new.raw_user_meta_data ->> 'name');
+  insert into public.profiles (id, name, username)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'name',
+    lower(new.raw_user_meta_data ->> 'username')
+  );
   return new;
 end;
 $$;
@@ -41,20 +46,21 @@ create table if not exists public.campaigns (
 
 -- Cards (tarefas dentro de campanhas)
 create table if not exists public.cards (
-  id              uuid primary key default gen_random_uuid(),
-  user_id         uuid not null references auth.users(id) on delete cascade,
-  campaign_id     uuid not null references public.campaigns(id) on delete cascade,
-  title           text not null,
-  description     text,
-  content_type    text not null default 'video',
-  stage           text not null default 'script',
-  priority        text not null default 'medium',
-  approval_status text not null default 'pending',
-  due_date        timestamptz,
-  checklist       jsonb default '[]',
-  guidebook       jsonb default '[]',
-  created_at      timestamptz default now(),
-  updated_at      timestamptz default now()
+  id                   uuid primary key default gen_random_uuid(),
+  user_id              uuid not null references auth.users(id) on delete cascade,
+  campaign_id          uuid references public.campaigns(id) on delete set null,
+  title                text not null,
+  description          text,
+  content_type         text not null default 'video',
+  stage                text not null default 'script',
+  priority             text not null default 'medium',
+  approval_status      text not null default 'pending',
+  due_date             timestamptz,
+  actual_delivery_date timestamptz,
+  checklist            jsonb default '[]',
+  guidebook            jsonb default '[]',
+  created_at           timestamptz default now(),
+  updated_at           timestamptz default now()
 );
 
 -- Row Level Security — cada usuário vê só os próprios dados
@@ -77,3 +83,55 @@ create policy "Usuário vê próprios cards"    on public.cards for select using
 create policy "Usuário cria cards"           on public.cards for insert with check (auth.uid() = user_id);
 create policy "Usuário edita próprios cards" on public.cards for update using (auth.uid() = user_id);
 create policy "Usuário deleta próprios cards" on public.cards for delete using (auth.uid() = user_id);
+
+-- ============================================================
+-- MIGRAÇÕES (execute no Supabase se o banco já existia)
+-- ============================================================
+
+-- 1. Adicionar coluna username em profiles
+alter table public.profiles add column if not exists username text unique;
+
+-- 2. Tornar campaign_id nullable em cards (era NOT NULL ON DELETE CASCADE)
+alter table public.cards alter column campaign_id drop not null;
+alter table public.cards drop constraint if exists cards_campaign_id_fkey;
+alter table public.cards add constraint cards_campaign_id_fkey
+  foreign key (campaign_id) references public.campaigns(id) on delete set null;
+
+-- 3. Adicionar data real de entrega em cards
+alter table public.cards add column if not exists actual_delivery_date timestamptz;
+
+-- ============================================================
+-- RPCs auxiliares (login por username, verificação de disponibilidade)
+-- ============================================================
+
+-- Retorna o e-mail associado a um username (usado no login)
+create or replace function public.get_email_by_username(p_username text)
+returns text language plpgsql security definer
+set search_path = public, auth as $$
+declare
+  v_email text;
+begin
+  select au.email into v_email
+  from auth.users au
+  join public.profiles p on p.id = au.id
+  where lower(p.username) = lower(p_username)
+  limit 1;
+  return v_email;
+end;
+$$;
+
+-- Verifica se um username está disponível
+create or replace function public.check_username_available(p_username text)
+returns boolean language plpgsql security definer
+set search_path = public as $$
+begin
+  return not exists (
+    select 1 from public.profiles
+    where lower(username) = lower(p_username)
+  );
+end;
+$$;
+
+-- Libera as RPCs para usuários não autenticados (necessário para login/signup)
+grant execute on function public.get_email_by_username(text)    to anon, authenticated;
+grant execute on function public.check_username_available(text) to anon, authenticated;

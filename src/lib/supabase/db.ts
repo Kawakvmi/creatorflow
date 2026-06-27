@@ -17,19 +17,20 @@ function mapCampaign(row: Record<string, unknown>): Campaign {
 
 function mapCard(row: Record<string, unknown>): Card {
   return {
-    id:             row.id              as string,
-    campaignId:     row.campaign_id     as string,
-    title:          row.title           as string,
-    description:    (row.description    as string) || "",
-    contentType:    row.content_type    as Card["contentType"],
-    stage:          row.stage           as Stage,
-    priority:       row.priority        as Card["priority"],
-    approvalStatus: row.approval_status as Card["approvalStatus"],
-    dueDate:        row.due_date        as string,
-    checklist:      (row.checklist      as Card["checklist"]) || [],
-    guidebook:      (row.guidebook      as Card["guidebook"]) || [],
-    createdAt:      row.created_at      as string,
-    updatedAt:      row.updated_at      as string,
+    id:                  row.id                   as string,
+    campaignId:          (row.campaign_id         as string) ?? null,
+    title:               row.title                as string,
+    description:         (row.description         as string) || "",
+    contentType:         row.content_type         as Card["contentType"],
+    stage:               row.stage                as Stage,
+    priority:            row.priority             as Card["priority"],
+    approvalStatus:      row.approval_status      as Card["approvalStatus"],
+    dueDate:             row.due_date             as string,
+    actualDeliveryDate:  (row.actual_delivery_date as string) ?? null,
+    checklist:           (row.checklist           as Card["checklist"]) || [],
+    guidebook:           (row.guidebook           as Card["guidebook"]) || [],
+    createdAt:           row.created_at           as string,
+    updatedAt:           row.updated_at           as string,
   };
 }
 
@@ -111,17 +112,18 @@ export async function createCard(
   const { data, error } = await supabase
     .from("cards")
     .insert({
-      user_id:        user.id,
-      campaign_id:    card.campaignId,
-      title:          card.title,
-      description:    card.description,
-      content_type:   card.contentType,
-      stage:          card.stage,
-      priority:       card.priority,
-      approval_status:card.approvalStatus,
-      due_date:       card.dueDate,
-      checklist:      card.checklist,
-      guidebook:      card.guidebook,
+      user_id:              user.id,
+      campaign_id:          card.campaignId || null,
+      title:                card.title,
+      description:          card.description,
+      content_type:         card.contentType,
+      stage:                card.stage,
+      priority:             card.priority,
+      approval_status:      card.approvalStatus,
+      due_date:             card.dueDate,
+      actual_delivery_date: card.actualDeliveryDate || null,
+      checklist:            card.checklist,
+      guidebook:            card.guidebook,
     })
     .select()
     .single();
@@ -135,15 +137,16 @@ export async function updateCard(
 ): Promise<void> {
   const supabase = createClient();
   const db: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (updates.title          !== undefined) db.title           = updates.title;
-  if (updates.description    !== undefined) db.description     = updates.description;
-  if (updates.contentType    !== undefined) db.content_type    = updates.contentType;
-  if (updates.stage          !== undefined) db.stage           = updates.stage;
-  if (updates.priority       !== undefined) db.priority        = updates.priority;
-  if (updates.approvalStatus !== undefined) db.approval_status = updates.approvalStatus;
-  if (updates.dueDate        !== undefined) db.due_date        = updates.dueDate;
-  if (updates.checklist      !== undefined) db.checklist       = updates.checklist;
-  if (updates.guidebook      !== undefined) db.guidebook       = updates.guidebook;
+  if (updates.title               !== undefined) db.title                = updates.title;
+  if (updates.description         !== undefined) db.description          = updates.description;
+  if (updates.contentType         !== undefined) db.content_type         = updates.contentType;
+  if (updates.stage               !== undefined) db.stage                = updates.stage;
+  if (updates.priority            !== undefined) db.priority             = updates.priority;
+  if (updates.approvalStatus      !== undefined) db.approval_status      = updates.approvalStatus;
+  if (updates.dueDate             !== undefined) db.due_date             = updates.dueDate;
+  if (updates.actualDeliveryDate  !== undefined) db.actual_delivery_date = updates.actualDeliveryDate;
+  if (updates.checklist           !== undefined) db.checklist            = updates.checklist;
+  if (updates.guidebook           !== undefined) db.guidebook            = updates.guidebook;
   const { error } = await supabase.from("cards").update(db).eq("id", id);
   if (error) throw error;
 }

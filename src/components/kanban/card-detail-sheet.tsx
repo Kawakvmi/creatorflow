@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import {
   CalendarIcon, Video, Gamepad2, Presentation,
   AlertTriangle, ChevronRight, Pencil, Check, X, BookOpen, ListChecks,
-  Plus, Trash2, ImagePlus, FileText,
+  Plus, Trash2, ImagePlus, FileText, CheckCircle2,
 } from "lucide-react";
 import { saveImage, getImage, deleteImage } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
@@ -136,6 +136,10 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
   }, [liveCard.id, updateCard]);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actualDeliveryDate, setActualDeliveryDate] = useState(
+    card.actualDeliveryDate ? format(parseISO(card.actualDeliveryDate), "yyyy-MM-dd") : ""
+  );
+  const actualDateInputRef = useRef<HTMLInputElement>(null);
 
   const handleDelete = async () => {
     removeCard(liveCard.id);
@@ -153,10 +157,13 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
   useEffect(() => {
     setTitle(card.title);
     setDescription(card.description);
+    setActualDeliveryDate(
+      card.actualDeliveryDate ? format(parseISO(card.actualDeliveryDate), "yyyy-MM-dd") : ""
+    );
     setEditingTitle(false);
     setEditingDesc(false);
     setActiveTab("details");
-  }, [card.id, card.title, card.description]);
+  }, [card.id, card.title, card.description, card.actualDeliveryDate]);
 
   const handleImageUpload = useCallback(
     async (file: File) => {
@@ -230,6 +237,22 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
 
   const handleApproval = (status: "approved" | "rejected" | "pending") => {
     syncCard({ approvalStatus: status });
+  };
+
+  const handleActualDeliveryDate = (dateStr: string) => {
+    setActualDeliveryDate(dateStr);
+    const isoDate = dateStr ? `${dateStr}T12:00:00.000Z` : null;
+    syncCard({ actualDeliveryDate: isoDate });
+  };
+
+  const handleFinalize = () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const deliveryDate = actualDeliveryDate || today;
+    if (!actualDeliveryDate) setActualDeliveryDate(today);
+    syncCard({
+      stage: "published",
+      actualDeliveryDate: `${deliveryDate}T12:00:00.000Z`,
+    });
   };
 
   const checkDone = liveCard.checklist.filter((c) => c.done).length;
@@ -342,13 +365,15 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
               transition={{ duration: 0.15 }}
               className="p-5 space-y-4"
             >
-              {/* Due Date */}
+              {/* Due Date (prevista) */}
               <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${isLate ? "bg-red-500/[0.08] border-red-500/20" : "bg-white/[0.04] border-white/[0.06]"}`}>
                 <CalendarIcon className={`w-5 h-5 shrink-0 ${isLate ? "text-red-400" : "text-white/40"}`} />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-0.5">Data de Entrega</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-0.5">Data Prevista de Entrega</p>
                   <p className={`text-sm font-medium ${isLate ? "text-red-400" : "text-white/80"}`}>
-                    {format(parseISO(liveCard.dueDate), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                    {liveCard.dueDate
+                      ? format(parseISO(liveCard.dueDate), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                      : "Não definida"}
                     {isLate && (
                       <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-normal">
                         <AlertTriangle className="w-3 h-3" /> Atrasado
@@ -477,6 +502,49 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
                   )}
                 </div>
               </div>
+
+              {/* Data Real de Entrega */}
+              <div
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.04] cursor-pointer hover:border-violet-500/30 hover:bg-white/[0.07] transition-all group"
+                onClick={() => actualDateInputRef.current?.click()}
+              >
+                <CheckCircle2 className={`w-5 h-5 shrink-0 ${actualDeliveryDate ? "text-emerald-400" : "text-white/30"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-0.5">Data Real de Entrega</p>
+                  <p className={`text-sm font-medium ${actualDeliveryDate ? "text-emerald-400" : "text-white/30 italic"}`}>
+                    {actualDeliveryDate
+                      ? format(parseISO(`${actualDeliveryDate}T12:00:00.000Z`), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                      : "Clique para definir..."}
+                  </p>
+                </div>
+                <Pencil className="w-3.5 h-3.5 text-white/20 group-hover:text-violet-400 transition-colors shrink-0" />
+                <input
+                  ref={actualDateInputRef}
+                  type="date"
+                  value={actualDeliveryDate}
+                  onChange={(e) => handleActualDeliveryDate(e.target.value)}
+                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                  tabIndex={-1}
+                />
+              </div>
+
+              {/* Finalizar Tarefa */}
+              {liveCard.stage !== "published" ? (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleFinalize}
+                  className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 hover:shadow-emerald-500/35 transition-all"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Finalizar Tarefa
+                </motion.button>
+              ) : (
+                <div className="flex items-center justify-center gap-2 h-10 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] text-sm font-semibold text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Tarefa Finalizada
+                </div>
+              )}
 
               {/* Delete */}
               <div className="pt-2">
