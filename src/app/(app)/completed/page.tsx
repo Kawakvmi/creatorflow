@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCreatorStore } from "@/lib/store/useCreatorStore";
-import { Card, ContentType, stageLabels, contentTypeLabels } from "@/lib/types";
+import { Card, ContentType, contentTypeLabels } from "@/lib/types";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
