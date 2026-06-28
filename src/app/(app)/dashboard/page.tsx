@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCreatorStore } from "@/lib/store/useCreatorStore";
@@ -8,7 +8,9 @@ import {
   stageLabels,
   Stage,
   ContentType,
+  contentTypeLabels,
   Card,
+  Campaign,
 } from "@/lib/types";
 import {
   isBefore,
@@ -29,8 +31,9 @@ import { CardDetailSheet } from "@/components/kanban/card-detail-sheet";
 import {
   AlertCircle, CheckCircle2, Clock, FolderOpen,
   Video, Gamepad2, Presentation, TrendingUp,
-  Plus, ListTodo, X, Sparkles, ChevronRight,
+  Plus, ListTodo, X, Sparkles, ChevronRight, ChevronLeft,
   LayoutTemplate, Globe, Palette, GripVertical,
+  LayoutGrid, List, CalendarDays,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
@@ -409,6 +412,170 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
 }
 
 /* ─────────────────────────────────────────────────────────
+   Carousel card — visão horizontal de tarefas
+───────────────────────────────────────────────────────── */
+function CarouselCard({
+  card, campaign, index, onClick,
+}: {
+  card: Card;
+  campaign?: Campaign;
+  index: number;
+  onClick: () => void;
+}) {
+  const typeConf = contentTypeConfig[card.contentType];
+  const prioConf = priorityConfig[card.priority];
+  const today    = new Date();
+  const isLate   = card.dueDate && isBefore(parseISO(card.dueDate), today);
+  const checkDone  = card.checklist.filter((c) => c.done).length;
+  const checkTotal = card.checklist.length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: index * 0.06, duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+      onClick={onClick}
+      className="shrink-0 w-[272px] cursor-pointer group"
+    >
+      <motion.div
+        whileHover={{ y: -7, scale: 1.025 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="relative rounded-2xl overflow-hidden"
+        style={{
+          background: "rgba(255,255,255,0.045)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.07) inset, 0 -1px 0 rgba(0,0,0,0.25) inset",
+        }}
+      >
+        {/* Coloured top stripe */}
+        <div className={`h-[3px] w-full bg-gradient-to-r ${typeConf.gradient}`} />
+
+        {/* Inner top highlight — glass shine */}
+        <div
+          className="absolute top-0 left-0 right-0 h-16 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.06), transparent)" }}
+        />
+
+        {/* Hover shimmer sweep */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
+
+        {/* Side glow on hover */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none rounded-2xl"
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+          style={{
+            background: `radial-gradient(ellipse 80% 60% at 50% 0%, rgba(139,92,246,0.08), transparent)`,
+          }}
+        />
+
+        <div className="relative p-5 space-y-3.5">
+          {/* Row 1: type icon + stage badge */}
+          <div className="flex items-start justify-between gap-2">
+            <div
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${typeConf.gradient} flex items-center justify-center text-white shadow-lg shrink-0`}
+              style={{ boxShadow: `0 4px 12px rgba(0,0,0,0.3)` }}
+            >
+              {typeConf.icon}
+            </div>
+            <span
+              className="text-[10px] font-semibold px-2 py-1 rounded-lg border mt-0.5"
+              style={{
+                borderColor: `${STAGE_COLORS[card.stage]}30`,
+                color: STAGE_COLORS[card.stage],
+                backgroundColor: `${STAGE_COLORS[card.stage]}10`,
+              }}
+            >
+              {stageLabels[card.stage]}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="font-semibold text-sm text-white/90 leading-snug group-hover:text-violet-300 transition-colors duration-200 line-clamp-2 min-h-[2.5rem]">
+            {card.title}
+          </h3>
+
+          {/* Campaign */}
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{
+                backgroundColor: campaign?.color ?? "#8b5cf6",
+                boxShadow: `0 0 6px ${campaign?.color ?? "#8b5cf6"}80`,
+              }}
+            />
+            <span className="text-xs text-white/40 truncate">{campaign?.name ?? "Sem campanha"}</span>
+          </div>
+
+          {/* Date */}
+          <div className={`flex items-center gap-1.5 text-xs ${isLate ? "text-red-400" : "text-white/40"}`}>
+            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {card.dueDate
+                ? format(parseISO(card.dueDate), "dd 'de' MMM, yyyy", { locale: ptBR })
+                : "Sem prazo"}
+            </span>
+            {isLate && <AlertCircle className="w-3 h-3 shrink-0" />}
+          </div>
+
+          {/* Checklist progress (if any) */}
+          {checkTotal > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-white/25">Checklist</span>
+                <span className="text-[9px] text-white/30">{checkDone}/{checkTotal}</span>
+              </div>
+              <div className="w-full bg-white/[0.07] rounded-full h-1 overflow-hidden">
+                <motion.div
+                  className={`h-1 rounded-full bg-gradient-to-r ${typeConf.gradient}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(checkDone / checkTotal) * 100}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: index * 0.06 }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Footer: priority + content type */}
+          <div className="flex items-center justify-between pt-0.5">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${prioConf.cls}`}>
+              {prioConf.label}
+            </span>
+            <span className="text-[10px] text-white/25 font-medium">{contentTypeLabels[card.contentType]}</span>
+          </div>
+        </div>
+
+        {/* Bottom mirror gradient */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none"
+          style={{ background: "linear-gradient(to top, rgba(255,255,255,0.025), transparent)" }}
+        />
+      </motion.div>
+
+      {/* Reflection below card */}
+      <div
+        className="relative h-8 mx-3 mt-0.5 pointer-events-none overflow-hidden"
+        style={{ transform: "scaleY(-1)", opacity: 0.18, filter: "blur(2px)" }}
+        aria-hidden
+      >
+        <div
+          className="h-full rounded-b-2xl"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)",
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)",
+          }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
    Dashboard Page
 ───────────────────────────────────────────────────────── */
 export default function DashboardPage() {
@@ -419,6 +586,12 @@ export default function DashboardPage() {
   const [demandDialogOpen,  setDemandDialogOpen]  = useState(false);
   const [selectedDemand,    setSelectedDemand]    = useState<Card | null>(null);
   const [demandDetailOpen,  setDemandDetailOpen]  = useState(false);
+  const [viewMode,          setViewMode]          = useState<"list" | "carousel">("list");
+  const carouselRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (dir: "left" | "right") => {
+    carouselRef.current?.scrollBy({ left: dir === "left" ? -300 : 300, behavior: "smooth" });
+  };
 
   const today               = useMemo(() => new Date(), []);
   const startOfCurrentMonth = useMemo(() => startOfMonth(today), [today]);
@@ -608,107 +781,193 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Botão Nova Demanda — destaque */}
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setDemandDialogOpen(true)}
-                  className="relative overflow-hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-lg shadow-violet-500/25 shrink-0 group"
-                  style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
-                >
-                  {/* Shimmer hover */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
-                  <Plus className="w-4 h-4 relative" />
-                  <span className="relative">Nova Tarefa</span>
-                  <Sparkles className="w-3.5 h-3.5 relative opacity-70" />
-                </motion.button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* View toggle */}
+                  <div className="flex items-center gap-0.5 p-1 rounded-xl border border-white/[0.08] bg-white/[0.04]">
+                    <button
+                      onClick={() => setViewMode("list")}
+                      title="Visão lista"
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                        viewMode === "list"
+                          ? "bg-violet-500/20 text-violet-400"
+                          : "text-white/30 hover:text-white/60 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <List className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("carousel")}
+                      title="Visão carrossel"
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                        viewMode === "carousel"
+                          ? "bg-violet-500/20 text-violet-400"
+                          : "text-white/30 hover:text-white/60 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Botão Nova Tarefa */}
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setDemandDialogOpen(true)}
+                    className="relative overflow-hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-lg shadow-violet-500/25 group"
+                    style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
+                    <Plus className="w-4 h-4 relative" />
+                    <span className="relative">Nova Tarefa</span>
+                    <Sparkles className="w-3.5 h-3.5 relative opacity-70" />
+                  </motion.button>
+                </div>
               </div>
             </div>
 
-            {/* Lista de demandas */}
-            <div className="divide-y divide-white/[0.04]">
-              {activeDemands.length > 0 ? (
-                activeDemands.map((card, i) => {
-                  const camp     = campaigns.find((c) => c.id === card.campaignId);
-                  const typeConf = contentTypeConfig[card.contentType];
-                  const prioConf = priorityConfig[card.priority];
-                  const isLate   = card.dueDate && isBefore(parseISO(card.dueDate), today);
+            {/* ── Lista ──────────────────────────────────── */}
+            <AnimatePresence mode="wait">
+              {viewMode === "list" ? (
+                <motion.div
+                  key="list"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="divide-y divide-white/[0.04]"
+                >
+                  {activeDemands.length > 0 ? (
+                    activeDemands.map((card, i) => {
+                      const camp     = campaigns.find((c) => c.id === card.campaignId);
+                      const typeConf = contentTypeConfig[card.contentType];
+                      const prioConf = priorityConfig[card.priority];
+                      const isLate   = card.dueDate && isBefore(parseISO(card.dueDate), today);
 
-                  return (
-                    <motion.button
-                      key={card.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.035, duration: 0.3 }}
-                      onClick={() => handleDemandClick(card)}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
-                    >
-                      {/* Campaign dot */}
-                      <div
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: camp?.color ?? "#8b5cf6", boxShadow: `0 0 6px ${camp?.color ?? "#8b5cf6"}80` }}
-                      />
-
-                      {/* Type icon */}
-                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${typeConf.gradient} flex items-center justify-center shrink-0 text-white shadow-sm`}>
-                        {typeConf.icon}
-                      </div>
-
-                      {/* Title + campaign */}
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="font-medium text-sm truncate leading-tight group-hover:text-violet-300 transition-colors">{card.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{camp?.name ?? "—"}</p>
-                      </div>
-
-                      {/* Badges */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* Stage */}
-                        <span
-                          className="text-[10px] px-2 py-0.5 rounded-md border font-medium"
-                          style={{ borderColor: `${STAGE_COLORS[card.stage]}35`, color: STAGE_COLORS[card.stage], backgroundColor: `${STAGE_COLORS[card.stage]}12` }}
+                      return (
+                        <motion.button
+                          key={card.id}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.035, duration: 0.3 }}
+                          onClick={() => handleDemandClick(card)}
+                          className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
                         >
-                          {stageLabels[card.stage]}
-                        </span>
-
-                        {/* Divider */}
-                        <div className="w-px h-4 bg-white/[0.08] shrink-0" />
-
-                        {/* Priority group */}
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-[8px] font-semibold uppercase tracking-wider text-white/20 leading-none">Prioridade</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold ${prioConf.cls}`}>
-                            {prioConf.label}
-                          </span>
-                        </div>
-
-                        {/* Date */}
-                        {card.dueDate && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium ${isLate ? "text-red-400 border-red-500/30 bg-red-500/10" : "text-white/40 border-white/[0.08] bg-white/[0.04]"}`}>
-                            {format(parseISO(card.dueDate), "dd MMM", { locale: ptBR })}
-                          </span>
-                        )}
+                          <div
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: camp?.color ?? "#8b5cf6", boxShadow: `0 0 6px ${camp?.color ?? "#8b5cf6"}80` }}
+                          />
+                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${typeConf.gradient} flex items-center justify-center shrink-0 text-white shadow-sm`}>
+                            {typeConf.icon}
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="font-medium text-sm truncate leading-tight group-hover:text-violet-300 transition-colors">{card.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{camp?.name ?? "—"}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded-md border font-medium"
+                              style={{ borderColor: `${STAGE_COLORS[card.stage]}35`, color: STAGE_COLORS[card.stage], backgroundColor: `${STAGE_COLORS[card.stage]}12` }}
+                            >
+                              {stageLabels[card.stage]}
+                            </span>
+                            <div className="w-px h-4 bg-white/[0.08] shrink-0" />
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-[8px] font-semibold uppercase tracking-wider text-white/20 leading-none">Prioridade</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold ${prioConf.cls}`}>
+                                {prioConf.label}
+                              </span>
+                            </div>
+                            {card.dueDate && (
+                              <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium ${isLate ? "text-red-400 border-red-500/30 bg-red-500/10" : "text-white/40 border-white/[0.08] bg-white/[0.04]"}`}>
+                                {format(parseISO(card.dueDate), "dd MMM", { locale: ptBR })}
+                              </span>
+                            )}
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -mr-1 group-hover:text-violet-400" />
+                        </motion.button>
+                      );
+                    })
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-70" />
                       </div>
-
-                      {/* Arrow indicator */}
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -mr-1 group-hover:text-violet-400" />
-                    </motion.button>
-                  );
-                })
+                      <p className="text-sm text-muted-foreground">Nenhuma tarefa ativa no momento.</p>
+                      <button
+                        onClick={() => setDemandDialogOpen(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-white/60 hover:bg-white/[0.08] hover:text-white transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Criar primeira tarefa
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-70" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">Nenhuma tarefa ativa no momento.</p>
-                  <button
-                    onClick={() => setDemandDialogOpen(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-white/60 hover:bg-white/[0.08] hover:text-white transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Criar primeira tarefa
-                  </button>
-                </div>
+                /* ── Carrossel ──────────────────────────────── */
+                <motion.div
+                  key="carousel"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  {activeDemands.length > 0 ? (
+                    <div className="relative">
+                      {/* Fade edges */}
+                      <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
+                        style={{ background: "linear-gradient(to right, rgba(15,15,18,0.9), transparent)" }} />
+                      <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
+                        style={{ background: "linear-gradient(to left, rgba(15,15,18,0.9), transparent)" }} />
+
+                      {/* Scroll arrows */}
+                      <button
+                        onClick={() => scrollCarousel("left")}
+                        className="absolute left-2 top-1/2 -translate-y-6 z-20 w-8 h-8 rounded-full border border-white/[0.10] bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/50 hover:text-white hover:border-white/25 transition-all shadow-lg"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => scrollCarousel("right")}
+                        className="absolute right-2 top-1/2 -translate-y-6 z-20 w-8 h-8 rounded-full border border-white/[0.10] bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/50 hover:text-white hover:border-white/25 transition-all shadow-lg"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+
+                      {/* Cards container */}
+                      <div
+                        ref={carouselRef}
+                        className="flex gap-4 px-5 py-5 overflow-x-auto"
+                        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                      >
+                        {activeDemands.map((card, i) => {
+                          const camp = campaigns.find((c) => c.id === card.campaignId);
+                          return (
+                            <CarouselCard
+                              key={card.id}
+                              card={card}
+                              campaign={camp}
+                              index={i}
+                              onClick={() => handleDemandClick(card)}
+                            />
+                          );
+                        })}
+                        {/* Spacer to avoid last card touching fade */}
+                        <div className="shrink-0 w-4" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-70" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Nenhuma tarefa ativa no momento.</p>
+                      <button
+                        onClick={() => setDemandDialogOpen(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-white/60 hover:bg-white/[0.08] hover:text-white transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Criar primeira tarefa
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </GlassCard>
 
           {/* ── Middle row ─────────────────────────────────── */}
