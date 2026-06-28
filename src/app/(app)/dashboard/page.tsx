@@ -96,7 +96,7 @@ const kpiConfig = [
 ───────────────────────────────────────────────────────── */
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] backdrop-blur-xl shadow-sm dark:shadow-xl dark:shadow-black/20 ${className}`}>
+    <div className={`rounded-2xl border border-violet-200/60 dark:border-white/[0.08] bg-white/[0.65] dark:bg-white/[0.04] backdrop-blur-xl shadow-[0_4px_24px_rgba(109,40,217,0.09),0_1px_4px_rgba(0,0,0,0.05)] dark:shadow-xl dark:shadow-black/20 ${className}`}>
       {children}
     </div>
   );
@@ -441,7 +441,7 @@ function CarouselCard({
       <motion.div
         whileHover={{ y: -7, scale: 1.025 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
-        className="relative rounded-2xl overflow-hidden bg-white dark:bg-white/[0.05] border border-zinc-200/80 dark:border-white/[0.09] shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.07)_inset]"
+        className="relative rounded-2xl overflow-hidden bg-white/[0.70] dark:bg-white/[0.05] border border-violet-200/60 dark:border-white/[0.09] shadow-[0_4px_20px_rgba(109,40,217,0.10),0_1px_4px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.07)_inset]"
         style={{
           backdropFilter: "blur(20px) saturate(180%)",
           WebkitBackdropFilter: "blur(20px) saturate(180%)",
@@ -526,7 +526,7 @@ function CarouselCard({
                 <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-white/25">Checklist</span>
                 <span className="text-[9px] text-zinc-400 dark:text-white/30">{checkDone}/{checkTotal}</span>
               </div>
-              <div className="w-full bg-zinc-200 dark:bg-white/[0.07] rounded-full h-1 overflow-hidden">
+              <div className="w-full bg-violet-100 dark:bg-white/[0.07] rounded-full h-1 overflow-hidden">
                 <motion.div
                   className={`h-1 rounded-full bg-gradient-to-r ${typeConf.gradient}`}
                   initial={{ width: 0 }}
@@ -697,11 +697,19 @@ export default function DashboardPage() {
       {/* Background com gradiente sutil */}
       <div
         className="min-h-full"
-        style={{
+        style={isDark ? {
           background: `
             radial-gradient(ellipse 70% 45% at 50% 0%, rgba(109,40,217,0.13) 0%, transparent 65%),
             radial-gradient(ellipse 35% 30% at 100% 80%, rgba(79,70,229,0.07) 0%, transparent 60%)
           `,
+        } : {
+          backgroundColor: "#f5f3ff",
+          backgroundImage: `
+            radial-gradient(ellipse 80% 55% at 50% -5%, rgba(109,40,217,0.12) 0%, transparent 65%),
+            radial-gradient(ellipse 40% 35% at 100% 88%, rgba(79,70,229,0.08) 0%, transparent 62%),
+            radial-gradient(rgba(109,40,217,0.028) 1px, transparent 1px)
+          `,
+          backgroundSize: "100% 100%, 100% 100%, 28px 28px",
         }}
       >
         <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
@@ -728,8 +736,8 @@ export default function DashboardPage() {
                   <motion.div
                     className={`relative rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 group backdrop-blur-xl
                       ${isCompleted
-                        ? "border-emerald-500/30 bg-white dark:bg-white/[0.04] hover:border-emerald-400/60"
-                        : `border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] ${kpi.glow} hover:border-zinc-300 dark:hover:border-white/[0.14]`
+                        ? "border-emerald-300/60 bg-white/70 dark:bg-white/[0.04] hover:border-emerald-400/60"
+                        : `border-violet-200/60 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ${kpi.glow} hover:border-violet-300/70 dark:hover:border-white/[0.14]`
                       }`}
                     animate={isCompleted ? {
                       boxShadow: [
@@ -783,7 +791,7 @@ export default function DashboardPage() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   {/* View toggle */}
-                  <div className="flex items-center gap-0.5 p-1 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-zinc-100 dark:bg-white/[0.04]">
+                  <div className="flex items-center gap-0.5 p-1 rounded-xl border border-violet-200/60 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04]">
                     <button
                       onClick={() => setViewMode("list")}
                       title="Visão lista"
@@ -832,7 +840,7 @@ export default function DashboardPage() {
                   key="list"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="divide-y divide-zinc-100 dark:divide-white/[0.04]"
+                  className="divide-y divide-violet-100/70 dark:divide-white/[0.04]"
                 >
                   {activeDemands.length > 0 ? (
                     activeDemands.map((card, i) => {
@@ -848,7 +856,7 @@ export default function DashboardPage() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.035, duration: 0.3 }}
                           onClick={() => handleDemandClick(card)}
-                          className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
+                          className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/50 dark:hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
                         >
                           <div
                             className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -868,7 +876,7 @@ export default function DashboardPage() {
                             >
                               {stageLabels[card.stage]}
                             </span>
-                            <div className="w-px h-4 bg-zinc-200 dark:bg-white/[0.08] shrink-0" />
+                            <div className="w-px h-4 bg-violet-200/60 dark:bg-white/[0.08] shrink-0" />
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="text-[8px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-white/20 leading-none">Prioridade</span>
                               <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold ${prioConf.cls}`}>
@@ -876,7 +884,7 @@ export default function DashboardPage() {
                               </span>
                             </div>
                             {card.dueDate && (
-                              <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium ${isLate ? "text-red-600 dark:text-red-400 border-red-400/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10" : "text-zinc-500 dark:text-white/40 border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.04]"}`}>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium ${isLate ? "text-red-600 dark:text-red-400 border-red-400/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10" : "text-zinc-500 dark:text-white/40 border-violet-200/60 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04]"}`}>
                                 {format(parseISO(card.dueDate), "dd MMM", { locale: ptBR })}
                               </span>
                             )}
@@ -887,13 +895,13 @@ export default function DashboardPage() {
                     })
                   ) : (
                     <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-white/70 dark:bg-white/5 border border-violet-200/60 dark:border-white/10 flex items-center justify-center">
                         <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-70" />
                       </div>
                       <p className="text-sm text-muted-foreground">Nenhuma tarefa ativa no momento.</p>
                       <button
                         onClick={() => setDemandDialogOpen(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.04] text-sm text-zinc-600 dark:text-white/60 hover:bg-zinc-100 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-violet-200/60 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] text-sm text-zinc-600 dark:text-white/60 hover:bg-white/90 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white transition-all"
                       >
                         <Plus className="w-3.5 h-3.5" /> Criar primeira tarefa
                       </button>
@@ -911,9 +919,9 @@ export default function DashboardPage() {
                     <div className="relative">
                       {/* Fade edges */}
                       <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
-                        style={{ background: isDark ? "linear-gradient(to right, rgba(9,9,11,0.9), transparent)" : "linear-gradient(to right, rgba(255,255,255,0.95), transparent)" }} />
+                        style={{ background: isDark ? "linear-gradient(to right, rgba(9,9,11,0.9), transparent)" : "linear-gradient(to right, rgba(245,243,255,0.97), transparent)" }} />
                       <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
-                        style={{ background: isDark ? "linear-gradient(to left, rgba(9,9,11,0.9), transparent)" : "linear-gradient(to left, rgba(255,255,255,0.95), transparent)" }} />
+                        style={{ background: isDark ? "linear-gradient(to left, rgba(9,9,11,0.9), transparent)" : "linear-gradient(to left, rgba(245,243,255,0.97), transparent)" }} />
 
                       {/* Scroll arrows */}
                       <button
@@ -953,13 +961,13 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-white/70 dark:bg-white/5 border border-violet-200/60 dark:border-white/10 flex items-center justify-center">
                         <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-70" />
                       </div>
                       <p className="text-sm text-muted-foreground">Nenhuma tarefa ativa no momento.</p>
                       <button
                         onClick={() => setDemandDialogOpen(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.04] text-sm text-zinc-600 dark:text-white/60 hover:bg-zinc-100 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-violet-200/60 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] text-sm text-zinc-600 dark:text-white/60 hover:bg-white/90 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white transition-all"
                       >
                         <Plus className="w-3.5 h-3.5" /> Criar primeira tarefa
                       </button>
@@ -1055,12 +1063,12 @@ export default function DashboardPage() {
                   deadlinesThisWeek.map((card) => {
                     const isLate = isBefore(parseISO(card.dueDate!), today);
                     return (
-                      <div key={card.id} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-colors gap-3">
+                      <div key={card.id} className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-white/[0.04] border border-violet-100 dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.07] transition-colors gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm leading-tight line-clamp-1">{card.title}</p>
                           <p className="text-xs text-muted-foreground">{stageLabels[card.stage]}</p>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium whitespace-nowrap shrink-0 ${isLate ? "text-red-600 dark:text-red-400 border-red-400/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10" : "text-zinc-500 dark:text-white/40 border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.04]"}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md border font-medium whitespace-nowrap shrink-0 ${isLate ? "text-red-600 dark:text-red-400 border-red-400/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10" : "text-zinc-500 dark:text-white/40 border-violet-200/60 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04]"}`}>
                           {format(parseISO(card.dueDate!), "dd MMM", { locale: ptBR })}
                         </span>
                       </div>
@@ -1097,7 +1105,7 @@ export default function DashboardPage() {
                         </div>
                         <span className="text-xs text-muted-foreground shrink-0">{camp.done}/{camp.total}</span>
                       </div>
-                      <div className="w-full bg-zinc-200 dark:bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full bg-violet-100 dark:bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
                         <motion.div
                           className="h-1.5 rounded-full"
                           style={{ backgroundColor: camp.color }}
