@@ -98,7 +98,7 @@ function GuidebookTextBlock({
 function FinalizeModal({ onConfirm, onClose }: { onConfirm: (dateStr: string) => void; onClose: () => void }) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selected, setSelected] = useState<string>(format(today, "yyyy-MM-dd"));
+  const [selected, setSelected] = useState<string>("");
 
   const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
   const firstDayRaw = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
@@ -244,16 +244,24 @@ function FinalizeModal({ onConfirm, onClose }: { onConfirm: (dateStr: string) =>
             Cancelar
           </button>
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={selected ? { scale: 1.02 } : {}}
+            whileTap={selected ? { scale: 0.97 } : {}}
             onClick={() => selected && onConfirm(selected)}
-            className="flex-1 h-10 rounded-xl text-sm font-semibold text-white transition-all"
-            style={{
+            disabled={!selected}
+            className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${
+              selected
+                ? "text-white cursor-pointer"
+                : "text-white/30 cursor-not-allowed"
+            }`}
+            style={selected ? {
               background: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
               boxShadow: "0 4px 16px rgba(16,185,129,0.30)",
+            } : {
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            Confirmar
+            Finalizar Tarefa
           </motion.button>
         </div>
       </motion.div>
