@@ -11,9 +11,29 @@ import {
   Plus, Folder, Briefcase, Camera, Music, Palette, PenTool,
   LayoutTemplate, Box, Globe, Megaphone, Sparkles, X, FolderOpen,
   MoreHorizontal, CheckCircle2, Trash2, RotateCcw, ChevronDown, AlertTriangle,
-  Users, UserPlus, Pencil, Building2,
+  Users, UserPlus, Pencil, Building2, ChevronRight,
 } from "lucide-react";
 import { Client } from "@/lib/types";
+
+const AVATAR_GRADIENTS = [
+  "from-sky-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-pink-500 to-rose-600",
+  "from-amber-500 to-orange-500",
+  "from-cyan-500 to-sky-600",
+  "from-fuchsia-500 to-pink-600",
+  "from-indigo-500 to-violet-600",
+];
+
+function getAvatarGradient(name: string): string {
+  const hash = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
+}
+
+function getInitials(name: string): string {
+  return name.split(" ").map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
 import { motion, AnimatePresence } from "framer-motion";
 
 const ICONS = [
@@ -268,100 +288,160 @@ function NewClientModal({
   );
 }
 
-/* ─── Client Card ──────────────────────────────────────────────────────────── */
-function ClientCard({
-  client, index, onEdit, onDelete,
+/* ─── Compact Client Card ──────────────────────────────────────────────────── */
+function CompactClientCard({ client, index, onClick }: { client: Client; index: number; onClick: () => void }) {
+  const initials = getInitials(client.name);
+  const gradient = getAvatarGradient(client.name);
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      onClick={onClick}
+      className="group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-zinc-200/80 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] hover:bg-zinc-50 dark:hover:bg-white/[0.07] hover:border-zinc-300 dark:hover:border-white/[0.14] transition-all duration-200 text-left cursor-pointer"
+    >
+      {/* Avatar */}
+      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-[11px] shrink-0 shadow-sm`}>
+        {initials || <Building2 className="w-3.5 h-3.5" />}
+      </div>
+      {/* Name */}
+      <span className="flex-1 text-sm font-medium text-zinc-700 dark:text-white/70 group-hover:text-zinc-900 dark:group-hover:text-white/90 truncate transition-colors leading-none">
+        {client.name}
+      </span>
+      {/* Arrow */}
+      <ChevronRight className="w-3.5 h-3.5 text-zinc-300 dark:text-white/15 group-hover:text-zinc-400 dark:group-hover:text-white/40 transition-colors shrink-0" />
+    </motion.button>
+  );
+}
+
+/* ─── Client Detail Modal ──────────────────────────────────────────────────── */
+function ClientDetailModal({
+  client, open, onClose, onEdit, onDelete,
 }: {
-  client: Client;
-  index: number;
+  client: Client | null;
+  open: boolean;
+  onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [menuOpen,      setMenuOpen]      = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    const fn = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", fn);
-    return () => document.removeEventListener("mousedown", fn);
-  }, [menuOpen]);
+    if (!open) { setConfirmDelete(false); return; }
+    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [open, onClose]);
 
-  const initials = client.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  if (!client) return null;
+
+  const initials = getInitials(client.name);
+  const gradient = getAvatarGradient(client.name);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-    >
-      <div className="relative rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] backdrop-blur-xl overflow-visible shadow-sm transition-all duration-200 hover:border-sky-300 dark:hover:border-sky-500/30 hover:shadow-md group">
-        <div className="h-0.5 w-full rounded-t-2xl bg-gradient-to-r from-sky-400 to-blue-500 opacity-60 group-hover:opacity-100 transition-opacity" />
-        <div className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
-              {initials || <Building2 className="w-5 h-5" />}
-            </div>
-            <div ref={menuRef} className="relative" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => { setConfirmDelete(false); setMenuOpen(v => !v); }}
-                className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all
-                  ${menuOpen
-                    ? "bg-white/10 dark:bg-white/10 border-white/20 text-zinc-700 dark:text-white/80"
-                    : "opacity-0 group-hover:opacity-100 bg-zinc-100 dark:bg-white/[0.05] border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-white/40 hover:bg-zinc-200 dark:hover:bg-white/10 hover:text-zinc-800 dark:hover:text-white/80"
-                  }`}
-              >
-                <MoreHorizontal className="w-3.5 h-3.5" />
-              </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-white/[0.10] shadow-xl shadow-black/40 overflow-hidden z-[9999]"
-                    style={{ background: "rgba(14,13,20,0.95)", backdropFilter: "blur(20px)" }}
-                  >
-                    <div className="p-1">
-                      <button onClick={() => { setMenuOpen(false); onEdit(); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/60 hover:text-white/90 hover:bg-white/[0.07] transition-all text-left">
-                        <Pencil className="w-3.5 h-3.5" /> Editar cliente
-                      </button>
-                      <div className="h-px bg-white/[0.06] mx-1 my-0.5" />
-                      {!confirmDelete ? (
-                        <button onClick={() => setConfirmDelete(true)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-red-400/80 hover:text-red-300 hover:bg-red-500/[0.08] transition-all text-left">
-                          <Trash2 className="w-3.5 h-3.5" /> Excluir cliente
-                        </button>
-                      ) : (
-                        <div className="px-3 py-2.5 space-y-2">
-                          <div className="flex items-center gap-1.5 text-red-400 text-xs font-medium">
-                            <AlertTriangle className="w-3.5 h-3.5" /> Confirmar exclusão?
-                          </div>
-                          <p className="text-[10px] text-white/30 leading-relaxed">Os cards vinculados perderão este cliente.</p>
-                          <div className="flex gap-2 pt-0.5">
-                            <button onClick={() => setConfirmDelete(false)} className="flex-1 h-7 rounded-lg border border-white/10 text-[11px] text-white/50 hover:text-white hover:bg-white/[0.07] transition-all">Cancelar</button>
-                            <button onClick={() => { setMenuOpen(false); setConfirmDelete(false); onDelete(); }} className="flex-1 h-7 rounded-lg bg-red-500/20 border border-red-500/30 text-[11px] text-red-400 hover:bg-red-500/30 transition-all font-semibold">Excluir</button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            key="panel"
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[71] flex items-center justify-center p-4"
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              className="w-full max-w-sm rounded-2xl border border-white/[0.09] overflow-hidden"
+              style={{
+                pointerEvents: "auto",
+                background: "rgba(14,13,20,0.97)",
+                backdropFilter: "blur(24px)",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-5 border-b border-white/[0.06]">
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] flex items-center justify-center text-white/40 hover:text-white transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-base shrink-0 shadow-lg`}>
+                    {initials || <Building2 className="w-5 h-5" />}
+                  </div>
+                  <div className="flex-1 min-w-0 pr-6">
+                    <h2 className="text-base font-semibold text-white leading-tight truncate">{client.name}</h2>
+                    <p className="text-[11px] text-white/35 mt-0.5">Cliente</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="px-6 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-2">Informações</p>
+                {client.notes ? (
+                  <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+                ) : (
+                  <p className="text-sm text-white/25 italic">Nenhuma informação adicional.</p>
                 )}
-              </AnimatePresence>
+              </div>
+
+              {/* Actions */}
+              <div className="px-6 pb-5 space-y-2">
+                <AnimatePresence mode="wait">
+                  {!confirmDelete ? (
+                    <motion.div key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-2">
+                      <button
+                        onClick={onEdit}
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.09] bg-white/[0.05] hover:bg-white/[0.10] text-xs font-medium text-white/60 hover:text-white/90 transition-all"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/[0.07] hover:bg-red-500/[0.14] text-xs font-medium text-red-400/70 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="confirm"
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      className="rounded-xl border border-red-500/20 bg-red-500/[0.07] p-3.5 space-y-3"
+                    >
+                      <div className="flex items-center gap-2 text-red-400 text-xs font-semibold">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        Excluir permanentemente?
+                      </div>
+                      <p className="text-[11px] text-white/30 leading-relaxed">Os cards vinculados a este cliente perderão o vínculo.</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setConfirmDelete(false)}
+                          className="flex-1 h-8 rounded-lg border border-white/[0.09] text-[11px] text-white/45 hover:text-white hover:bg-white/[0.06] transition-all">Cancelar</button>
+                        <button onClick={() => { onDelete(); onClose(); }}
+                          className="flex-1 h-8 rounded-lg bg-red-500/20 border border-red-500/30 text-[11px] font-semibold text-red-400 hover:bg-red-500/30 transition-all">Excluir</button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
-          <h3 className="font-semibold text-base leading-tight mb-1 text-zinc-900 dark:text-white/90">{client.name}</h3>
-          <p className="text-xs text-zinc-400 dark:text-white/30 line-clamp-2 min-h-[2rem]">
-            {client.notes || "Sem informações adicionais."}
-          </p>
-        </div>
-      </div>
-    </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -583,6 +663,8 @@ export default function CampaignsPage() {
   const [showArchived,    setShowArchived]    = useState(false);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [editingClient,   setEditingClient]   = useState<Client | null>(null);
+  const [detailClient,    setDetailClient]    = useState<Client | null>(null);
+  const [detailOpen,      setDetailOpen]      = useState(false);
 
   const getCampaignProgress = (campaignId: string) => {
     const cc = cards.filter((c) => c.campaignId === campaignId);
@@ -611,6 +693,8 @@ export default function CampaignsPage() {
   };
 
   const openEditClient = (client: Client) => {
+    setDetailOpen(false);
+    setDetailClient(null);
     setEditingClient(client);
     setClientModalOpen(true);
   };
@@ -618,6 +702,11 @@ export default function CampaignsPage() {
   const closeClientModal = () => {
     setClientModalOpen(false);
     setEditingClient(null);
+  };
+
+  const openDetail = (client: Client) => {
+    setDetailClient(client);
+    setDetailOpen(true);
   };
 
   return (
@@ -628,6 +717,13 @@ export default function CampaignsPage() {
         onOpenChange={(v) => { if (!v) closeClientModal(); else setClientModalOpen(true); }}
         editingClient={editingClient}
         onClose={closeClientModal}
+      />
+      <ClientDetailModal
+        client={detailClient}
+        open={detailOpen}
+        onClose={() => { setDetailOpen(false); setDetailClient(null); }}
+        onEdit={() => { if (detailClient) openEditClient(detailClient); }}
+        onDelete={() => { if (detailClient) handleDeleteClient(detailClient.id); }}
       />
 
       <div className="min-h-full" style={{ background: `radial-gradient(ellipse 75% 45% at 50% 0%, rgba(109,40,217,0.11) 0%, transparent 60%), radial-gradient(ellipse 35% 30% at 0% 80%, rgba(79,70,229,0.06) 0%, transparent 55%)` }}>
@@ -716,51 +812,49 @@ export default function CampaignsPage() {
           )}
 
           {/* ── Clientes ─────────────────────────────────────────────────── */}
-          <div className="space-y-5 pt-2">
+          <div className="space-y-4 pt-2">
+            {/* Section header */}
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-600/20 border border-sky-500/20 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold tracking-tight">Clientes</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {clients.length === 0 ? "Nenhum cliente cadastrado" : `${clients.length} cliente${clients.length !== 1 ? "s" : ""} cadastrado${clients.length !== 1 ? "s" : ""}`}
-                  </p>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 text-zinc-400 dark:text-white/30 shrink-0" />
+                <h2 className="text-sm font-semibold text-zinc-500 dark:text-white/40 uppercase tracking-wider">
+                  Clientes
+                </h2>
+                {clients.length > 0 && (
+                  <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-white/[0.07] text-zinc-400 dark:text-white/30">
+                    {clients.length}
+                  </span>
+                )}
               </div>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              <button
                 onClick={() => { setEditingClient(null); setClientModalOpen(true); }}
-                className="relative overflow-hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-lg shadow-sky-500/20 shrink-0 group"
-                style={{ background: "linear-gradient(135deg, #0284c7, #1d4ed8)" }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] hover:bg-zinc-50 dark:hover:bg-white/[0.08] text-xs font-medium text-zinc-500 dark:text-white/45 hover:text-zinc-700 dark:hover:text-white/70 transition-all"
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
-                <UserPlus className="w-4 h-4 relative" />
-                <span className="relative">Cadastrar Cliente</span>
-              </motion.button>
+                <UserPlus className="w-3.5 h-3.5" />
+                Cadastrar cliente
+              </button>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-sky-500/30 via-sky-500/10 to-transparent" />
+            {/* Thin divider */}
+            <div className="h-px bg-zinc-100 dark:bg-white/[0.05]" />
 
             {clients.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 text-center rounded-2xl border border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]">
-                <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-3">
-                  <Users className="w-6 h-6 text-sky-400 opacity-70" />
-                </div>
-                <p className="text-sm font-semibold text-zinc-500 dark:text-white/40">Nenhum cliente ainda</p>
-                <p className="text-xs text-muted-foreground mt-1">Cadastre clientes para vincular às suas tarefas</p>
+              <div className="flex items-center gap-3 py-8 justify-center text-center">
+                <p className="text-sm text-zinc-400 dark:text-white/25">
+                  Nenhum cliente cadastrado.{" "}
+                  <button onClick={() => { setEditingClient(null); setClientModalOpen(true); }} className="text-sky-500 dark:text-sky-400 hover:underline underline-offset-2 transition-all">
+                    Cadastrar agora
+                  </button>
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {clients.map((client, index) => (
-                  <ClientCard
+                  <CompactClientCard
                     key={client.id}
                     client={client}
                     index={index}
-                    onEdit={() => openEditClient(client)}
-                    onDelete={() => handleDeleteClient(client.id)}
+                    onClick={() => openDetail(client)}
                   />
                 ))}
               </div>
