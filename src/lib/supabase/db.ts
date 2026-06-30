@@ -1,4 +1,4 @@
-import { createClient } from "./client";
+import { createClient as createSupabaseClient } from "./client";
 import { Campaign, Card, Client, Stage } from "../types";
 
 // ─── Mappers (snake_case DB → camelCase TS) ──────────────────────────────────
@@ -47,7 +47,7 @@ function mapCard(row: Record<string, unknown>): Card {
 // ─── Campaigns ────────────────────────────────────────────────────────────────
 
 export async function getCampaigns(): Promise<Campaign[]> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
@@ -59,7 +59,7 @@ export async function getCampaigns(): Promise<Campaign[]> {
 export async function createCampaign(
   campaign: Omit<Campaign, "id" | "createdAt">
 ): Promise<Campaign> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
 
@@ -83,7 +83,7 @@ export async function updateCampaign(
   id: string,
   updates: Partial<Campaign>
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const db: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (updates.name        !== undefined) db.name        = updates.name;
   if (updates.description !== undefined) db.description = updates.description;
@@ -95,7 +95,7 @@ export async function updateCampaign(
 }
 
 export async function deleteCampaign(id: string): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { error } = await supabase.from("campaigns").delete().eq("id", id);
   if (error) throw error;
 }
@@ -103,7 +103,7 @@ export async function deleteCampaign(id: string): Promise<void> {
 // ─── Cards ────────────────────────────────────────────────────────────────────
 
 export async function getCards(): Promise<Card[]> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from("cards")
     .select("*")
@@ -115,7 +115,7 @@ export async function getCards(): Promise<Card[]> {
 export async function createCard(
   card: Omit<Card, "id" | "createdAt" | "updatedAt">
 ): Promise<Card> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
 
@@ -146,7 +146,7 @@ export async function updateCard(
   id: string,
   updates: Partial<Card>
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const db: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (updates.title               !== undefined) db.title                = updates.title;
   if (updates.description         !== undefined) db.description          = updates.description;
@@ -164,7 +164,7 @@ export async function updateCard(
 }
 
 export async function deleteCard(id: string): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { error } = await supabase.from("cards").delete().eq("id", id);
   if (error) throw error;
 }
@@ -172,7 +172,7 @@ export async function deleteCard(id: string): Promise<void> {
 // ─── Clients ──────────────────────────────────────────────────────────────────
 
 export async function getClients(): Promise<Client[]> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from("clients")
     .select("*")
@@ -182,7 +182,7 @@ export async function getClients(): Promise<Client[]> {
 }
 
 export async function createClient(client: Omit<Client, "id" | "createdAt">): Promise<Client> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
 
@@ -196,7 +196,7 @@ export async function createClient(client: Omit<Client, "id" | "createdAt">): Pr
 }
 
 export async function updateClient(id: string, updates: Partial<Client>): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const db: Record<string, unknown> = {};
   if (updates.name  !== undefined) db.name  = updates.name;
   if (updates.notes !== undefined) db.notes = updates.notes;
@@ -205,7 +205,7 @@ export async function updateClient(id: string, updates: Partial<Client>): Promis
 }
 
 export async function deleteClient(id: string): Promise<void> {
-  const supabase = createClient();
+  const supabase = createSupabaseClient();
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) throw error;
 }
