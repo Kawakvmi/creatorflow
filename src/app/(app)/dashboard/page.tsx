@@ -642,6 +642,7 @@ function ClientAnalyticsModal({
 
   if (!stat) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const PieMod = Pie as any;
   const donutData = stat.stageBreakdown
     .filter((s) => s.count > 0)
