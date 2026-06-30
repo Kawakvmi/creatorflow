@@ -12,6 +12,7 @@ import {
   contentTypeLabels,
   Card,
   Campaign,
+  Client,
 } from "@/lib/types";
 import {
   isBefore,
@@ -34,7 +35,7 @@ import {
   Video, Gamepad2, Presentation, TrendingUp,
   Plus, ListTodo, X, Sparkles, ChevronRight, ChevronLeft,
   LayoutTemplate, Globe, Palette, GripVertical,
-  LayoutGrid, List, CalendarDays,
+  LayoutGrid, List, CalendarDays, Building2,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
@@ -416,10 +417,11 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
    Carousel card — visão horizontal de tarefas
 ───────────────────────────────────────────────────────── */
 function CarouselCard({
-  card, campaign, index, onClick,
+  card, campaign, client, index, onClick,
 }: {
   card: Card;
   campaign?: Campaign;
+  client?: Client;
   index: number;
   onClick: () => void;
 }) {
@@ -508,6 +510,14 @@ function CarouselCard({
             <span className="text-xs text-zinc-500 dark:text-white/40 truncate">{campaign?.name ?? "Sem campanha"}</span>
           </div>
 
+          {/* Client */}
+          {client && (
+            <div className="flex items-center gap-1.5">
+              <Building2 className="w-3 h-3 text-violet-400/70 shrink-0" />
+              <span className="text-[11px] text-violet-500 dark:text-violet-400/80 font-medium truncate">{client.name}</span>
+            </div>
+          )}
+
           {/* Date */}
           <div className={`flex items-center gap-1.5 text-xs ${isLate ? "text-red-500 dark:text-red-400" : "text-zinc-500 dark:text-white/40"}`}>
             <CalendarDays className="w-3.5 h-3.5 shrink-0" />
@@ -580,6 +590,7 @@ export default function DashboardPage() {
   const router    = useRouter();
   const campaigns = useCreatorStore((s) => s.campaigns);
   const cards     = useCreatorStore((s) => s.cards);
+  const clients   = useCreatorStore((s) => s.clients);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -845,6 +856,7 @@ export default function DashboardPage() {
                   {activeDemands.length > 0 ? (
                     activeDemands.map((card, i) => {
                       const camp     = campaigns.find((c) => c.id === card.campaignId);
+                      const client   = clients.find((c) => c.id === card.clientId);
                       const typeConf = contentTypeConfig[card.contentType];
                       const prioConf = priorityConfig[card.priority];
                       const isLate   = card.dueDate && isBefore(parseISO(card.dueDate), today);
@@ -867,7 +879,17 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex-1 min-w-0 text-left">
                             <p className="font-medium text-sm truncate leading-tight group-hover:text-violet-300 transition-colors">{card.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{camp?.name ?? "—"}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-xs text-muted-foreground truncate">{camp?.name ?? "—"}</p>
+                              {client && (
+                                <>
+                                  <span className="text-muted-foreground/40 text-xs">·</span>
+                                  <span className="flex items-center gap-1 text-[11px] text-violet-500 dark:text-violet-400/80 font-medium truncate">
+                                    <Building2 className="w-3 h-3 shrink-0" />{client.name}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span
@@ -944,12 +966,14 @@ export default function DashboardPage() {
                         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                       >
                         {activeDemands.map((card, i) => {
-                          const camp = campaigns.find((c) => c.id === card.campaignId);
+                          const camp   = campaigns.find((c) => c.id === card.campaignId);
+                          const client = clients.find((c) => c.id === card.clientId);
                           return (
                             <CarouselCard
                               key={card.id}
                               card={card}
                               campaign={camp}
+                              client={client}
                               index={i}
                               onClick={() => handleDemandClick(card)}
                             />
