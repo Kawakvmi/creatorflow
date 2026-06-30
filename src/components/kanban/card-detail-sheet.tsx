@@ -287,6 +287,7 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
   const [activeTab, setActiveTab]               = useState<Tab>("details");
   const [editingTitle, setEditingTitle]         = useState(false);
   const [editingDesc, setEditingDesc]           = useState(false);
+  const [editingDueDate, setEditingDueDate]     = useState(false);
   const [title, setTitle]                       = useState(card.title);
   const [description, setDescription]           = useState(card.description);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -296,6 +297,7 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
     setDescription(card.description);
     setEditingTitle(false);
     setEditingDesc(false);
+    setEditingDueDate(false);
     setActiveTab("details");
   }, [card.id, card.title, card.description]);
 
@@ -452,20 +454,42 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
               className="p-5 space-y-4"
             >
               {/* Due date */}
-              <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${isLate ? "bg-red-500/[0.08] border-red-500/20" : "bg-white/[0.04] border-white/[0.06]"}`}>
+              <div className={`flex items-center gap-3 p-3.5 rounded-xl border transition-colors ${isLate ? "bg-red-500/[0.08] border-red-500/20" : "bg-white/[0.04] border-white/[0.06]"}`}>
                 <CalendarIcon className={`w-5 h-5 shrink-0 ${isLate ? "text-red-400" : "text-white/40"}`} />
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-0.5">Data Prevista de Entrega</p>
-                  <p className={`text-sm font-medium ${isLate ? "text-red-400" : "text-white/80"}`}>
-                    {liveCard.dueDate
-                      ? format(parseISO(liveCard.dueDate), "dd 'de' MMMM, yyyy", { locale: ptBR })
-                      : "Não definida"}
-                    {isLate && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-normal">
-                        <AlertTriangle className="w-3 h-3" /> Atrasado
+                  {editingDueDate ? (
+                    <input
+                      type="date"
+                      autoFocus
+                      defaultValue={liveCard.dueDate ? liveCard.dueDate.slice(0, 10) : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v) syncCard({ dueDate: `${v}T12:00:00.000Z` });
+                        setEditingDueDate(false);
+                      }}
+                      onBlur={() => setEditingDueDate(false)}
+                      className="bg-white/[0.06] border border-violet-500/40 rounded-lg px-2 py-1 text-sm text-white/90 focus:outline-none focus:border-violet-500/70"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingDueDate(true)}
+                      className="flex items-center gap-1.5 group/date text-left"
+                    >
+                      <span className={`text-sm font-medium group-hover/date:underline decoration-dotted underline-offset-2 ${isLate ? "text-red-400" : "text-white/80"}`}>
+                        {liveCard.dueDate
+                          ? format(parseISO(liveCard.dueDate), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                          : "Não definida — clique para definir"}
                       </span>
-                    )}
-                  </p>
+                      {isLate && (
+                        <span className="inline-flex items-center gap-1 text-xs text-red-400 font-normal">
+                          <AlertTriangle className="w-3 h-3" /> Atrasado
+                        </span>
+                      )}
+                      <Pencil className="w-3 h-3 text-white/20 group-hover/date:text-violet-400 transition-colors shrink-0" />
+                    </button>
+                  )}
                 </div>
               </div>
 
