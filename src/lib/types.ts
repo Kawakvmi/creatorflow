@@ -37,6 +37,7 @@ export interface Campaign {
   createdAt: string;
   dueDate?: string;
   archived: boolean;
+  clientId?: string | null;
 }
 
 export interface ChecklistItem {

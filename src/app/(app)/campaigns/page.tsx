@@ -58,10 +58,12 @@ const COLORS = [
 /* ─── Modal Nova Campanha ──────────────────────────────────────────────────── */
 function NewCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const addCampaign = useCreatorStore((s) => s.addCampaign);
+  const clients     = useCreatorStore((s) => s.clients);
   const [name,          setName]          = useState("");
   const [description,   setDescription]   = useState("");
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [selectedIcon,  setSelectedIcon]  = useState(ICONS[0].name);
+  const [clientId,      setClientId]      = useState("");
   const [loading,       setLoading]       = useState(false);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ function NewCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }, [open, onOpenChange]);
 
   const reset = () => {
-    setName(""); setDescription("");
+    setName(""); setDescription(""); setClientId("");
     setSelectedColor(COLORS[0]); setSelectedIcon(ICONS[0].name);
   };
 
@@ -81,7 +83,7 @@ function NewCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     if (!name.trim()) return;
     setLoading(true);
     try {
-      const created = await db.createCampaign({ name: name.trim(), description: description.trim(), color: selectedColor, icon: selectedIcon, archived: false });
+      const created = await db.createCampaign({ name: name.trim(), description: description.trim(), color: selectedColor, icon: selectedIcon, archived: false, clientId: clientId || null });
       addCampaign(created);
       onOpenChange(false);
       reset();
@@ -123,6 +125,21 @@ function NewCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Descrição <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span></Label>
                   <Textarea placeholder="Objetivo principal da campanha..." value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="rounded-xl border-white/10 bg-white/[0.06] placeholder:text-white/25 resize-none focus:border-violet-500/50 focus:ring-violet-500/30" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                    Cliente <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span>
+                  </Label>
+                  <select
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/50"
+                  >
+                    <option value="" style={{ background: "#18181b" }}>— Sem cliente —</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Cor de Destaque</Label>

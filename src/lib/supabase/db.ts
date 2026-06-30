@@ -12,6 +12,7 @@ function mapCampaign(row: Record<string, unknown>): Campaign {
     icon:        row.icon        as string,
     archived:    row.archived    as boolean,
     createdAt:   row.created_at  as string,
+    clientId:    (row.client_id  as string) ?? null,
   };
 }
 
@@ -75,6 +76,7 @@ export async function createCampaign(
       color:       campaign.color,
       icon:        campaign.icon,
       archived:    campaign.archived ?? false,
+      client_id:   campaign.clientId  || null,
     })
     .select()
     .single();
@@ -93,6 +95,7 @@ export async function updateCampaign(
   if (updates.color       !== undefined) db.color       = updates.color;
   if (updates.icon        !== undefined) db.icon        = updates.icon;
   if (updates.archived    !== undefined) db.archived    = updates.archived;
+  if (updates.clientId    !== undefined) db.client_id   = updates.clientId ?? null;
   const { error } = await supabase.from("campaigns").update(db).eq("id", id);
   if (error) throw error;
 }
