@@ -17,10 +17,13 @@ function mapCampaign(row: Record<string, unknown>): Campaign {
 
 function mapClient(row: Record<string, unknown>): Client {
   return {
-    id:        row.id         as string,
-    name:      row.name       as string,
-    notes:     (row.notes     as string) || "",
-    createdAt: row.created_at as string,
+    id:        row.id          as string,
+    name:      row.name        as string,
+    notes:     (row.notes      as string) || "",
+    email:     (row.email      as string) || undefined,
+    whatsapp:  (row.whatsapp   as string) || undefined,
+    driveLink: (row.drive_link as string) || undefined,
+    createdAt: row.created_at  as string,
   };
 }
 
@@ -188,7 +191,14 @@ export async function createClient(client: Omit<Client, "id" | "createdAt">): Pr
 
   const { data, error } = await supabase
     .from("clients")
-    .insert({ user_id: user.id, name: client.name, notes: client.notes || "" })
+    .insert({
+      user_id:    user.id,
+      name:       client.name,
+      notes:      client.notes || "",
+      email:      client.email      || null,
+      whatsapp:   client.whatsapp   || null,
+      drive_link: client.driveLink  || null,
+    })
     .select()
     .single();
   if (error) throw error;
@@ -198,8 +208,11 @@ export async function createClient(client: Omit<Client, "id" | "createdAt">): Pr
 export async function updateClient(id: string, updates: Partial<Client>): Promise<void> {
   const supabase = createSupabaseClient();
   const db: Record<string, unknown> = {};
-  if (updates.name  !== undefined) db.name  = updates.name;
-  if (updates.notes !== undefined) db.notes = updates.notes;
+  if (updates.name      !== undefined) db.name       = updates.name;
+  if (updates.notes     !== undefined) db.notes      = updates.notes;
+  if (updates.email     !== undefined) db.email      = updates.email      || null;
+  if (updates.whatsapp  !== undefined) db.whatsapp   = updates.whatsapp   || null;
+  if (updates.driveLink !== undefined) db.drive_link = updates.driveLink  || null;
   const { error } = await supabase.from("clients").update(db).eq("id", id);
   if (error) throw error;
 }

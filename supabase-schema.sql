@@ -118,6 +118,11 @@ create policy "Usuário deleta próprios clientes" on public.clients for delete 
 -- 5. Coluna client_id em cards (FK para clients, set null ao deletar)
 alter table public.cards add column if not exists client_id uuid references public.clients(id) on delete set null;
 
+-- 6. Colunas adicionais em clients
+alter table public.clients add column if not exists email      text;
+alter table public.clients add column if not exists whatsapp   text;
+alter table public.clients add column if not exists drive_link text;
+
 -- ============================================================
 -- RPCs auxiliares (login por username, verificação de disponibilidade)
 -- ============================================================

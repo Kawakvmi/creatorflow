@@ -12,6 +12,7 @@ import {
   LayoutTemplate, Box, Globe, Megaphone, Sparkles, X, FolderOpen,
   MoreHorizontal, CheckCircle2, Trash2, RotateCcw, ChevronDown, AlertTriangle,
   Users, UserPlus, Pencil, Building2, ChevronRight,
+  Mail, Phone, ExternalLink,
 } from "lucide-react";
 import { Client } from "@/lib/types";
 
@@ -185,14 +186,20 @@ function NewClientModal({
 }) {
   const addClient    = useCreatorStore((s) => s.addClient);
   const updateClient = useCreatorStore((s) => s.updateClient);
-  const [name,    setName]    = useState(editingClient?.name    ?? "");
-  const [notes,   setNotes]   = useState(editingClient?.notes   ?? "");
-  const [loading, setLoading] = useState(false);
+  const [name,      setName]      = useState("");
+  const [notes,     setNotes]     = useState("");
+  const [email,     setEmail]     = useState("");
+  const [whatsapp,  setWhatsapp]  = useState("");
+  const [driveLink, setDriveLink] = useState("");
+  const [loading,   setLoading]   = useState(false);
 
   useEffect(() => {
     if (open) {
-      setName(editingClient?.name ?? "");
-      setNotes(editingClient?.notes ?? "");
+      setName(editingClient?.name      ?? "");
+      setNotes(editingClient?.notes    ?? "");
+      setEmail(editingClient?.email    ?? "");
+      setWhatsapp(editingClient?.whatsapp  ?? "");
+      setDriveLink(editingClient?.driveLink ?? "");
     }
   }, [open, editingClient]);
 
@@ -207,12 +214,19 @@ function NewClientModal({
     e.preventDefault();
     if (!name.trim()) return;
     setLoading(true);
+    const payload = {
+      name:      name.trim(),
+      notes:     notes.trim(),
+      email:     email.trim()     || undefined,
+      whatsapp:  whatsapp.trim()  || undefined,
+      driveLink: driveLink.trim() || undefined,
+    };
     try {
       if (editingClient) {
-        updateClient(editingClient.id, { name: name.trim(), notes: notes.trim() });
-        await db.updateClient(editingClient.id, { name: name.trim(), notes: notes.trim() });
+        updateClient(editingClient.id, payload);
+        await db.updateClient(editingClient.id, payload);
       } else {
-        const created = await db.createClient({ name: name.trim(), notes: notes.trim() });
+        const created = await db.createClient(payload);
         addClient(created);
       }
       onClose();
@@ -220,61 +234,85 @@ function NewClientModal({
     finally { setLoading(false); }
   };
 
+  const inputCls = "w-full h-10 px-3 rounded-xl border border-white/10 bg-white/[0.06] text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-sky-500/50 focus:border-sky-500/40 transition-all";
+
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div key="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[60] bg-black/65 backdrop-blur-md" onClick={() => onOpenChange(false)} />
+            className="fixed inset-0 z-[80] bg-black/65 backdrop-blur-md" onClick={() => onOpenChange(false)} />
           <motion.div key="modal" initial={{ opacity: 0, scale: 0.9, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.93, y: 12 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }} className="fixed inset-0 z-[61] flex items-center justify-center p-4" style={{ pointerEvents: "none" }}>
-            <div className="w-full max-w-md rounded-2xl border border-white/[0.10] bg-zinc-900/90 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden" style={{ pointerEvents: "auto" }} onClick={(e) => e.stopPropagation()}>
-              <div className="relative px-6 pt-6 pb-4 border-b border-white/[0.06]">
-                <div className="absolute inset-0 bg-gradient-to-br from-sky-600/10 to-transparent pointer-events-none" />
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }} className="fixed inset-0 z-[81] flex items-center justify-center p-4" style={{ pointerEvents: "none" }}>
+            <div className="w-full max-w-md rounded-2xl border border-white/[0.10] bg-zinc-900/95 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden" style={{ pointerEvents: "auto" }} onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="relative px-6 pt-5 pb-4 border-b border-white/[0.06]">
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-600/8 to-transparent pointer-events-none" />
                 <div className="flex items-center justify-between relative">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                      <Building2 className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md shadow-sky-500/25">
+                      <Building2 className="w-3.5 h-3.5 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-white">{editingClient ? "Editar Cliente" : "Novo Cliente"}</h2>
-                      <p className="text-xs text-white/40">Cadastre um cliente para vincular às tarefas</p>
+                      <h2 className="text-sm font-semibold text-white">{editingClient ? "Editar Cliente" : "Novo Cliente"}</h2>
+                      <p className="text-[11px] text-white/35">Todos os campos, exceto nome, são opcionais</p>
                     </div>
                   </div>
-                  <button onClick={() => onOpenChange(false)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/50 hover:text-white">
+                  <button onClick={() => onOpenChange(false)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/40 hover:text-white">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+              <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+                {/* Nome */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-white/60 uppercase tracking-wider block">Nome do Cliente</label>
-                  <input
-                    placeholder="Ex: Empresa XYZ, João Silva..."
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    autoFocus
-                    className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/[0.06] text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-sky-500/50 focus:border-sky-500/40 transition-all"
-                  />
+                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider block">Nome do Cliente *</label>
+                  <input placeholder="Ex: Empresa XYZ, João Silva..." value={name} onChange={(e) => setName(e.target.value)} required autoFocus className={inputCls} />
                 </div>
+
+                {/* Linha Email + WhatsApp */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                      <Mail className="w-3 h-3" /> Email
+                    </label>
+                    <input type="email" placeholder="email@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                      <Phone className="w-3 h-3" /> WhatsApp
+                    </label>
+                    <input type="tel" placeholder="+55 11 99999-9999" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Drive */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-white/60 uppercase tracking-wider block">
-                    Informações Adicionais <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span>
+                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                    <ExternalLink className="w-3 h-3" /> Link do Drive
                   </label>
+                  <input type="url" placeholder="https://drive.google.com/..." value={driveLink} onChange={(e) => setDriveLink(e.target.value)} className={inputCls} />
+                </div>
+
+                {/* Observações */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider block">Observações</label>
                   <textarea
-                    placeholder="Contato, segmento, observações..."
+                    placeholder="Segmento, contexto, anotações..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    rows={3}
+                    rows={2}
                     className="w-full px-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.06] text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-sky-500/50 focus:border-sky-500/40 resize-none transition-all"
                   />
                 </div>
+
+                {/* Footer */}
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => onOpenChange(false)} className="flex-1 h-10 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-medium text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
+                  <button type="button" onClick={() => onOpenChange(false)} className="flex-1 h-10 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-medium text-white/55 hover:bg-white/[0.08] hover:text-white transition-all">
                     Cancelar
                   </button>
-                  <button type="submit" disabled={loading} className="flex-1 h-10 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 hover:from-sky-500 hover:to-blue-500 disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+                  <button type="submit" disabled={loading} className="flex-1 h-10 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 text-sm font-semibold text-white hover:from-sky-500 hover:to-blue-500 disabled:opacity-60 transition-all flex items-center justify-center gap-2">
                     {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : editingClient ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     {editingClient ? "Salvar Alterações" : "Cadastrar Cliente"}
                   </button>
@@ -388,13 +426,67 @@ function ClientDetailModal({
                 </div>
               </div>
 
-              {/* Notes */}
-              <div className="px-6 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-2">Informações</p>
-                {client.notes ? (
-                  <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap">{client.notes}</p>
-                ) : (
-                  <p className="text-sm text-white/25 italic">Nenhuma informação adicional.</p>
+              {/* Contact links + notes */}
+              <div className="px-6 py-4 space-y-3">
+                {/* Contact row */}
+                {(client.email || client.whatsapp || client.driveLink) && (
+                  <div className="flex flex-col gap-2">
+                    {client.email && (
+                      <a
+                        href={`mailto:${client.email}`}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.07] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all group"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
+                          <Mail className="w-3.5 h-3.5 text-blue-400" />
+                        </div>
+                        <span className="text-sm text-white/60 group-hover:text-white/85 truncate transition-colors flex-1">{client.email}</span>
+                        <ExternalLink className="w-3 h-3 text-white/20 group-hover:text-white/40 shrink-0 transition-colors" />
+                      </a>
+                    )}
+                    {client.whatsapp && (
+                      <a
+                        href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.07] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all group"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                          <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                        </div>
+                        <span className="text-sm text-white/60 group-hover:text-white/85 truncate transition-colors flex-1">{client.whatsapp}</span>
+                        <ExternalLink className="w-3 h-3 text-white/20 group-hover:text-white/40 shrink-0 transition-colors" />
+                      </a>
+                    )}
+                    {client.driveLink && (
+                      <a
+                        href={client.driveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.07] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all group"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0">
+                          <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                        </div>
+                        <span className="text-sm text-white/60 group-hover:text-white/85 truncate transition-colors flex-1">Google Drive</span>
+                        <ExternalLink className="w-3 h-3 text-white/20 group-hover:text-white/40 shrink-0 transition-colors" />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Notes */}
+                {client.notes && (
+                  <div className="px-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/25 mb-1.5">Observações</p>
+                    <p className="text-sm text-white/50 leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+                  </div>
+                )}
+
+                {!client.email && !client.whatsapp && !client.driveLink && !client.notes && (
+                  <p className="text-sm text-white/20 italic text-center py-2">Nenhuma informação adicional.</p>
                 )}
               </div>
 

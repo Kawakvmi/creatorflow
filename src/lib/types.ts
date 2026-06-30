@@ -57,6 +57,9 @@ export interface Client {
   id: string;
   name: string;
   notes: string;
+  email?: string;
+  whatsapp?: string;
+  driveLink?: string;
   createdAt: string;
 }
 
