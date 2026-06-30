@@ -113,9 +113,11 @@ interface QuickDemandDialogProps {
 
 function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
   const campaigns = useCreatorStore((s) => s.campaigns).filter((c) => !c.archived);
+  const clients   = useCreatorStore((s) => s.clients);
   const addCard   = useCreatorStore((s) => s.addCard);
 
   const [campaignId,      setCampaignId]      = useState("");
+  const [clientId,        setClientId]        = useState("");
   const [title,           setTitle]           = useState("");
   const [description,     setDescription]     = useState("");
   const [contentType,     setContentType]     = useState<ContentType>("video");
@@ -150,7 +152,7 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
   const reset = () => {
     setTitle(""); setDescription(""); setContentType("video");
     setPriority("medium"); setDueDate("");
-    setCampaignId("");
+    setCampaignId(""); setClientId("");
     setChecklistItems(checklistTemplates["video"]);
     setEditChecklist(false); setNewItemLabel("");
   };
@@ -162,6 +164,7 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
     try {
       const created = await db.createCard({
         campaignId: campaignId || null,
+        clientId: clientId || null,
         title: title.trim(),
         description: description.trim(),
         contentType,
@@ -248,6 +251,19 @@ function QuickDemandDialog({ open, onOpenChange }: QuickDemandDialogProps) {
                   <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={selectCls}>
                     <option value="" style={{ background: "#18181b" }}>— Sem campanha —</option>
                     {campaigns.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Cliente */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                    Cliente <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span>
+                  </Label>
+                  <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={selectCls}>
+                    <option value="" style={{ background: "#18181b" }}>— Sem cliente —</option>
+                    {clients.map((c) => (
                       <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
                     ))}
                   </select>
