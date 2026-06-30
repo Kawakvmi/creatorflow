@@ -100,6 +100,24 @@ alter table public.cards add constraint cards_campaign_id_fkey
 -- 3. Adicionar data real de entrega em cards
 alter table public.cards add column if not exists actual_delivery_date timestamptz;
 
+-- 4. Tabela de clientes
+create table if not exists public.clients (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  name       text not null,
+  notes      text default '',
+  created_at timestamptz default now()
+);
+
+alter table public.clients enable row level security;
+create policy "Usuário vê próprios clientes"    on public.clients for select using (auth.uid() = user_id);
+create policy "Usuário cria clientes"           on public.clients for insert with check (auth.uid() = user_id);
+create policy "Usuário edita próprios clientes" on public.clients for update using (auth.uid() = user_id);
+create policy "Usuário deleta próprios clientes" on public.clients for delete using (auth.uid() = user_id);
+
+-- 5. Coluna client_id em cards (FK para clients, set null ao deletar)
+alter table public.cards add column if not exists client_id uuid references public.clients(id) on delete set null;
+
 -- ============================================================
 -- RPCs auxiliares (login por username, verificação de disponibilidade)
 -- ============================================================

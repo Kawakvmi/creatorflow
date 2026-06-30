@@ -1,15 +1,17 @@
 import { create } from "zustand";
-import { Campaign, Card, MockUser, Stage } from "../types";
+import { Campaign, Card, Client, MockUser, Stage } from "../types";
 
 interface CreatorState {
   campaigns:    Campaign[];
   cards:        Card[];
+  clients:      Client[];
   user:         MockUser | null;
   isLoading:    boolean;
 
   // Hydration (called after Supabase fetch)
   setCampaigns: (campaigns: Campaign[]) => void;
   setCards:     (cards: Card[]) => void;
+  setClients:   (clients: Client[]) => void;
   setLoading:   (v: boolean) => void;
 
   // Local mutations (optimistic update — Supabase write happens in the caller)
@@ -22,6 +24,10 @@ interface CreatorState {
   updateCardStage: (id: string, stage: Stage) => void;
   removeCard:      (id: string) => void;
 
+  addClient:    (client: Client) => void;
+  updateClient: (id: string, updates: Partial<Client>) => void;
+  removeClient: (id: string) => void;
+
   // Auth
   setUser: (user: MockUser | null) => void;
 
@@ -33,11 +39,13 @@ interface CreatorState {
 export const useCreatorStore = create<CreatorState>()((set, get) => ({
   campaigns: [],
   cards:     [],
+  clients:   [],
   user:      null,
   isLoading: true,
 
   setCampaigns: (campaigns) => set({ campaigns }),
   setCards:     (cards)     => set({ cards }),
+  setClients:   (clients)   => set({ clients }),
   setLoading:   (v)         => set({ isLoading: v }),
 
   addCampaign: (campaign) =>
@@ -74,6 +82,20 @@ export const useCreatorStore = create<CreatorState>()((set, get) => ({
 
   removeCard: (id) =>
     set((s) => ({ cards: s.cards.filter((c) => c.id !== id) })),
+
+  addClient: (client) =>
+    set((s) => ({ clients: [client, ...s.clients] })),
+
+  updateClient: (id, updates) =>
+    set((s) => ({
+      clients: s.clients.map((c) => c.id === id ? { ...c, ...updates } : c),
+    })),
+
+  removeClient: (id) =>
+    set((s) => ({
+      clients: s.clients.filter((c) => c.id !== id),
+      cards: s.cards.map((c) => c.clientId === id ? { ...c, clientId: null } : c),
+    })),
 
   setUser: (user) => set({ user }),
 

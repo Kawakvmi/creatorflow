@@ -70,29 +70,24 @@ function NeonCompletedCard({
       className="cursor-pointer group"
     >
       <motion.div
-        className="relative rounded-2xl border border-emerald-500/25 bg-white/[0.04] backdrop-blur-xl overflow-hidden"
+        className="relative rounded-2xl border border-emerald-200 dark:border-emerald-500/25 bg-white dark:bg-white/[0.04] shadow-sm dark:shadow-none backdrop-blur-xl overflow-hidden"
         animate={{
           boxShadow: [
-            "0 0 6px rgba(16,185,129,0.15), 0 0 18px rgba(16,185,129,0.06)",
-            "0 0 14px rgba(16,185,129,0.30), 0 0 40px rgba(16,185,129,0.10)",
-            "0 0 6px rgba(16,185,129,0.15), 0 0 18px rgba(16,185,129,0.06)",
+            "0 0 6px rgba(16,185,129,0.00), 0 0 0px rgba(16,185,129,0.00)",
+            "0 0 14px rgba(16,185,129,0.00), 0 0 0px rgba(16,185,129,0.00)",
+            "0 0 6px rgba(16,185,129,0.00), 0 0 0px rgba(16,185,129,0.00)",
           ],
         }}
-        transition={{ duration: 2.8 + index * 0.3, repeat: Infinity, ease: "easeInOut" }}
         whileHover={{
-          boxShadow:
-            "0 0 18px rgba(16,185,129,0.55), 0 0 50px rgba(16,185,129,0.22), 0 0 90px rgba(16,185,129,0.08)",
+          boxShadow: "0 4px 24px rgba(16,185,129,0.12), 0 1px 6px rgba(16,185,129,0.08)",
           borderColor: "rgba(52,211,153,0.55)",
         }}
       >
-        {/* Shimmer sweep on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-
         {/* Emerald top bar */}
         <div className="h-0.5 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500" />
 
-        {/* Faint inner glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-transparent pointer-events-none" />
+        {/* Faint inner glow — dark only */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-transparent pointer-events-none dark:block hidden" />
 
         <div className="relative p-5 space-y-4">
           {/* Header row */}
@@ -103,7 +98,7 @@ function NeonCompletedCard({
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-white/90 leading-snug group-hover:text-emerald-300 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-sm text-gray-900 dark:text-white/90 leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors line-clamp-2">
                 {card.title}
               </h3>
               <div className="flex items-center gap-1.5 mt-1">
@@ -111,31 +106,31 @@ function NeonCompletedCard({
                   <>
                     <div
                       className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: campaignColor, boxShadow: `0 0 5px ${campaignColor}80` }}
+                      style={{ backgroundColor: campaignColor }}
                     />
-                    <span className="text-[11px] text-white/40 truncate">{campaignName}</span>
-                    <span className="text-white/20">·</span>
+                    <span className="text-[11px] text-gray-500 dark:text-white/40 truncate">{campaignName}</span>
+                    <span className="text-gray-300 dark:text-white/20">·</span>
                   </>
                 )}
-                <span className="text-[11px] text-white/40">{contentTypeLabels[card.contentType]}</span>
+                <span className="text-[11px] text-gray-500 dark:text-white/40">{contentTypeLabels[card.contentType]}</span>
               </div>
             </div>
 
             {/* Completed badge */}
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 shrink-0">
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-              <span className="text-[10px] font-semibold text-emerald-400">Concluído</span>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 shrink-0">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">Concluído</span>
             </div>
           </div>
 
           {/* Dates row */}
           <div className="grid grid-cols-2 gap-3">
             {/* Planned */}
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-              <Calendar className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]">
+              <Calendar className="w-4 h-4 text-gray-400 dark:text-white/30 shrink-0 mt-0.5" />
               <div>
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-white/30 mb-0.5">Prazo previsto</p>
-                <p className="text-xs font-medium text-white/65">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-0.5">Prazo previsto</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-white/65">
                   {plannedDate ?? "—"}
                 </p>
               </div>
@@ -144,13 +139,13 @@ function NeonCompletedCard({
             {/* Actual */}
             <div className={`flex items-start gap-2 p-3 rounded-xl border ${
               actualDate
-                ? "bg-emerald-500/[0.07] border-emerald-500/20"
-                : "bg-white/[0.04] border-white/[0.06]"
+                ? "bg-emerald-50 dark:bg-emerald-500/[0.07] border-emerald-200 dark:border-emerald-500/20"
+                : "bg-gray-50 dark:bg-white/[0.04] border-gray-200 dark:border-white/[0.06]"
             }`}>
-              <CalendarCheck className={`w-4 h-4 shrink-0 mt-0.5 ${actualDate ? "text-emerald-400" : "text-white/20"}`} />
+              <CalendarCheck className={`w-4 h-4 shrink-0 mt-0.5 ${actualDate ? "text-emerald-600 dark:text-emerald-400" : "text-gray-300 dark:text-white/20"}`} />
               <div>
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-white/30 mb-0.5">Entrega real</p>
-                <p className={`text-xs font-medium ${actualDate ? "text-emerald-400" : "text-white/30 italic"}`}>
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-0.5">Entrega real</p>
+                <p className={`text-xs font-medium ${actualDate ? "text-emerald-700 dark:text-emerald-400" : "text-gray-400 dark:text-white/30 italic"}`}>
                   {actualDate ?? "Não registrada"}
                 </p>
               </div>
@@ -160,15 +155,15 @@ function NeonCompletedCard({
           {/* Time delta */}
           {daysDiff !== null && (
             <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-white/30 shrink-0" />
+              <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-white/30 shrink-0" />
               {daysDiff === 0 ? (
-                <span className="text-[11px] text-emerald-400 font-medium">Entregue no prazo</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Entregue no prazo</span>
               ) : onTime ? (
-                <span className="text-[11px] text-emerald-400 font-medium">
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                   {Math.abs(daysDiff)} {Math.abs(daysDiff) === 1 ? "dia" : "dias"} antes do prazo
                 </span>
               ) : (
-                <span className="text-[11px] text-amber-400 font-medium">
+                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                   {daysDiff} {daysDiff === 1 ? "dia" : "dias"} após o prazo
                 </span>
               )}
@@ -227,8 +222,8 @@ export default function CompletedPage() {
         className="min-h-full"
         style={{
           background: `
-            radial-gradient(ellipse 65% 40% at 50% 0%, rgba(16,185,129,0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 30% 25% at 95% 85%, rgba(52,211,153,0.06) 0%, transparent 55%)
+            radial-gradient(ellipse 65% 40% at 50% 0%, rgba(16,185,129,0.07) 0%, transparent 60%),
+            radial-gradient(ellipse 30% 25% at 95% 85%, rgba(52,211,153,0.04) 0%, transparent 55%)
           `,
         }}
       >
@@ -239,7 +234,7 @@ export default function CompletedPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.back()}
-                className="w-9 h-9 rounded-xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.09] flex items-center justify-center text-white/50 hover:text-white transition-all shrink-0"
+                className="w-9 h-9 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-100/80 dark:bg-white/[0.04] hover:bg-gray-200 dark:hover:bg-white/[0.09] flex items-center justify-center text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white transition-all shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
@@ -248,14 +243,14 @@ export default function CompletedPage() {
                   <motion.div
                     animate={{
                       filter: [
-                        "drop-shadow(0 0 4px rgba(16,185,129,0.4))",
-                        "drop-shadow(0 0 10px rgba(16,185,129,0.8))",
-                        "drop-shadow(0 0 4px rgba(16,185,129,0.4))",
+                        "drop-shadow(0 0 4px rgba(16,185,129,0.3))",
+                        "drop-shadow(0 0 10px rgba(16,185,129,0.6))",
+                        "drop-shadow(0 0 4px rgba(16,185,129,0.3))",
                       ],
                     }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                    <CheckCircle2 className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />
                   </motion.div>
                   <h1 className="text-2xl font-bold tracking-tight">Concluídos</h1>
                 </div>
@@ -267,15 +262,15 @@ export default function CompletedPage() {
 
             {/* Stats chips */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs font-semibold text-emerald-400">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   {onTimeCount} no prazo
                 </span>
               </div>
               {completedCards.length > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08]">
-                  <span className="text-xs text-white/50">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100/80 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]">
+                  <span className="text-xs text-gray-500 dark:text-white/50">
                     {Math.round((onTimeCount / completedCards.length) * 100)}% de pontualidade
                   </span>
                 </div>
@@ -285,18 +280,18 @@ export default function CompletedPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-white/30 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar tarefas concluídas..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-9 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 focus:border-emerald-500/40 backdrop-blur-sm transition-all"
+              className="w-full h-10 pl-10 pr-9 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 focus:border-emerald-500/40 backdrop-blur-sm transition-all"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/70 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -327,24 +322,14 @@ export default function CompletedPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center justify-center py-24 text-center gap-4"
               >
-                <motion.div
-                  animate={{
-                    boxShadow: [
-                      "0 0 8px rgba(16,185,129,0.15)",
-                      "0 0 22px rgba(16,185,129,0.35)",
-                      "0 0 8px rgba(16,185,129,0.15)",
-                    ],
-                  }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-16 h-16 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] flex items-center justify-center"
-                >
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400 opacity-70" />
-                </motion.div>
+                <div className="w-16 h-16 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/[0.06] flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 opacity-70" />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-white/60">
+                  <p className="text-sm font-semibold text-gray-500 dark:text-white/60">
                     {search ? "Nenhuma tarefa encontrada" : "Nenhuma tarefa concluída ainda"}
                   </p>
-                  <p className="text-xs text-white/30 mt-1">
+                  <p className="text-xs text-gray-400 dark:text-white/30 mt-1">
                     {search
                       ? "Tente outro termo de busca"
                       : "Finalize tarefas no Kanban para vê-las aqui"}

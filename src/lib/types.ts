@@ -53,9 +53,17 @@ export interface GuidebookBlock {
   createdAt: string;
 }
 
+export interface Client {
+  id: string;
+  name: string;
+  notes: string;
+  createdAt: string;
+}
+
 export interface Card {
   id: string;
   campaignId: string | null;
+  clientId: string | null;
   title: string;
   description: string;
   contentType: ContentType;

@@ -1,5 +1,6 @@
 import { Card as KanbanCardType } from "@/lib/types";
-import { Video, Gamepad2, Presentation, CalendarIcon, CheckSquare, LayoutTemplate, Globe, Palette } from "lucide-react";
+import { useCreatorStore } from "@/lib/store/useCreatorStore";
+import { Video, Gamepad2, Presentation, CalendarIcon, CheckSquare, LayoutTemplate, Globe, Palette, Building2 } from "lucide-react";
 import { isBefore, parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DraggableProvidedDraggableProps, DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
@@ -31,11 +32,13 @@ const priorityConfig = {
 export function KanbanItem({
   card, innerRef, draggableProps, dragHandleProps, isDragging, onClick,
 }: KanbanCardProps) {
-  const isLate    = card.dueDate && isBefore(parseISO(card.dueDate), new Date()) && card.stage !== "published";
-  const checkDone = card.checklist.filter((c) => c.done).length;
+  const clients    = useCreatorStore((s) => s.clients);
+  const client     = card.clientId ? clients.find((c) => c.id === card.clientId) : null;
+  const isLate     = card.dueDate && isBefore(parseISO(card.dueDate), new Date()) && card.stage !== "published";
+  const checkDone  = card.checklist.filter((c) => c.done).length;
   const checkTotal = card.checklist.length;
-  const typeConf  = contentTypeConfig[card.contentType];
-  const prioConf  = priorityConfig[card.priority];
+  const typeConf   = contentTypeConfig[card.contentType];
+  const prioConf   = priorityConfig[card.priority];
 
   return (
     <div
@@ -79,6 +82,14 @@ export function KanbanItem({
               {typeConf.icon}
             </div>
           </div>
+
+          {/* Client */}
+          {client && (
+            <div className="flex items-center gap-1 mb-1.5">
+              <Building2 className="w-2.5 h-2.5 text-sky-400/70 shrink-0" />
+              <span className="text-[10px] text-sky-400/80 truncate font-medium">{client.name}</span>
+            </div>
+          )}
 
           {/* Description */}
           {card.description && (

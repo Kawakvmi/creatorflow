@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import {
   CalendarIcon, Video, Gamepad2, Presentation,
   AlertTriangle, ChevronRight, ChevronLeft, Pencil, Check, X, BookOpen, ListChecks,
-  Plus, Trash2, ImagePlus, FileText, CheckCircle2, CalendarCheck,
+  Plus, Trash2, ImagePlus, FileText, CheckCircle2, CalendarCheck, Building2,
 } from "lucide-react";
 import { saveImage, getImage, deleteImage } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
@@ -274,6 +274,7 @@ function FinalizeModal({ onConfirm, onClose }: { onConfirm: (dateStr: string) =>
 function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void }) {
   const updateCard = useCreatorStore((state) => state.updateCard);
   const removeCard = useCreatorStore((state) => state.removeCard);
+  const clients    = useCreatorStore((state) => state.clients);
   const liveCard   = useCreatorStore((state) => state.cards.find((c) => c.id === card.id)) ?? card;
 
   const syncCard = useCallback(async (updates: Partial<Card>) => {
@@ -465,6 +466,24 @@ function CardDetailContent({ card, onClose }: { card: Card; onClose: () => void 
                       </span>
                     )}
                   </p>
+                </div>
+              </div>
+
+              {/* Cliente */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Cliente</p>
+                <div className="flex items-center gap-2 p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                  <Building2 className="w-4 h-4 text-sky-400/70 shrink-0" />
+                  <select
+                    value={liveCard.clientId ?? ""}
+                    onChange={(e) => syncCard({ clientId: e.target.value || null })}
+                    className="flex-1 bg-transparent text-sm text-white/80 focus:outline-none cursor-pointer"
+                  >
+                    <option value="" style={{ background: "#18181b" }}>— Sem cliente —</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreatorStore } from "@/lib/store/useCreatorStore";
 import { ChecklistItem, ContentType, Stage } from "@/lib/types";
 import * as db from "@/lib/supabase/db";
-import { Plus, X, GripVertical } from "lucide-react";
+import { Plus, X, GripVertical, Building2 } from "lucide-react";
 
 const checklistTemplates: Record<ContentType, string[]> = {
   video:        ["Roteiro escrito", "Narração gravada", "Trilha sonora", "Thumbnail/arte", "Edição finalizada", "Revisão de qualidade", "Legendas", "Upload feito"],
@@ -33,9 +33,11 @@ interface NewCardDialogProps {
 }
 
 export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: NewCardDialogProps) {
-  const addCard = useCreatorStore((s) => s.addCard);
+  const addCard  = useCreatorStore((s) => s.addCard);
+  const clients  = useCreatorStore((s) => s.clients);
 
   const [title,       setTitle]       = useState("");
+  const [clientId,    setClientId]    = useState<string>("");
   const [description, setDescription] = useState("");
   const [contentType, setContentType] = useState<ContentType>("video");
   const [priority,    setPriority]    = useState<"low" | "medium" | "high">("medium");
@@ -67,7 +69,7 @@ export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: 
   };
 
   const resetForm = () => {
-    setTitle(""); setDescription(""); setContentType("video");
+    setTitle(""); setClientId(""); setDescription(""); setContentType("video");
     setPriority("medium"); setDueDate("");
     setChecklistItems(checklistTemplates["video"]);
     setEditingChecklist(false); setNewItemLabel("");
@@ -79,6 +81,7 @@ export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: 
     try {
       const created = await db.createCard({
         campaignId,
+        clientId: clientId || null,
         title: title.trim(),
         description: description.trim(),
         contentType,
@@ -119,6 +122,24 @@ export function NewCardDialog({ open, onOpenChange, campaignId, initialStage }: 
                 required
                 className="rounded-xl border-white/[0.08] bg-white/[0.05] placeholder:text-white/20"
               />
+            </div>
+
+            {/* Cliente */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/50 uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                <Building2 className="w-3 h-3" />
+                Cliente <span className="text-white/25 normal-case tracking-normal font-normal">(opcional)</span>
+              </Label>
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className={selectCls}
+              >
+                <option value="" style={{ background: "#18181b" }}>— Sem cliente —</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id} style={{ background: "#18181b" }}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
             {/* Descrição */}

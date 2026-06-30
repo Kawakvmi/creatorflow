@@ -1,5 +1,5 @@
 import { createClient } from "./client";
-import { Campaign, Card, Stage } from "../types";
+import { Campaign, Card, Client, Stage } from "../types";
 
 // ─── Mappers (snake_case DB → camelCase TS) ──────────────────────────────────
 
@@ -15,10 +15,20 @@ function mapCampaign(row: Record<string, unknown>): Campaign {
   };
 }
 
+function mapClient(row: Record<string, unknown>): Client {
+  return {
+    id:        row.id         as string,
+    name:      row.name       as string,
+    notes:     (row.notes     as string) || "",
+    createdAt: row.created_at as string,
+  };
+}
+
 function mapCard(row: Record<string, unknown>): Card {
   return {
     id:                  row.id                   as string,
     campaignId:          (row.campaign_id         as string) ?? null,
+    clientId:            (row.client_id           as string) ?? null,
     title:               row.title                as string,
     description:         (row.description         as string) || "",
     contentType:         row.content_type         as Card["contentType"],
@@ -114,6 +124,7 @@ export async function createCard(
     .insert({
       user_id:              user.id,
       campaign_id:          card.campaignId || null,
+      client_id:            card.clientId || null,
       title:                card.title,
       description:          card.description,
       content_type:         card.contentType,
@@ -147,6 +158,7 @@ export async function updateCard(
   if (updates.actualDeliveryDate  !== undefined) db.actual_delivery_date = updates.actualDeliveryDate;
   if (updates.checklist           !== undefined) db.checklist            = updates.checklist;
   if (updates.guidebook           !== undefined) db.guidebook            = updates.guidebook;
+  if (updates.clientId            !== undefined) db.client_id            = updates.clientId ?? null;
   const { error } = await supabase.from("cards").update(db).eq("id", id);
   if (error) throw error;
 }
@@ -154,5 +166,46 @@ export async function updateCard(
 export async function deleteCard(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("cards").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Clients ──────────────────────────────────────────────────────────────────
+
+export async function getClients(): Promise<Client[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapClient);
+}
+
+export async function createClient(client: Omit<Client, "id" | "createdAt">): Promise<Client> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Não autenticado");
+
+  const { data, error } = await supabase
+    .from("clients")
+    .insert({ user_id: user.id, name: client.name, notes: client.notes || "" })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapClient(data);
+}
+
+export async function updateClient(id: string, updates: Partial<Client>): Promise<void> {
+  const supabase = createClient();
+  const db: Record<string, unknown> = {};
+  if (updates.name  !== undefined) db.name  = updates.name;
+  if (updates.notes !== undefined) db.notes = updates.notes;
+  const { error } = await supabase.from("clients").update(db).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteClient(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) throw error;
 }
