@@ -584,6 +584,254 @@ function CarouselCard({
 }
 
 /* ─────────────────────────────────────────────────────────
+   Client analytics — helpers + types
+───────────────────────────────────────────────────────── */
+const CLIENT_GRADIENTS_LIST = [
+  "from-sky-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-pink-500 to-rose-600",
+  "from-amber-500 to-orange-500",
+  "from-cyan-500 to-sky-600",
+  "from-fuchsia-500 to-pink-600",
+  "from-indigo-500 to-blue-700",
+];
+const CLIENT_SOLID_COLORS = [
+  "#0ea5e9","#8b5cf6","#10b981","#ec4899","#f59e0b","#06b6d4","#d946ef","#6366f1",
+];
+function clientInitials(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+function clientGradient(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return CLIENT_GRADIENTS_LIST[Math.abs(h) % CLIENT_GRADIENTS_LIST.length];
+}
+function clientSolidColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return CLIENT_SOLID_COLORS[Math.abs(h) % CLIENT_SOLID_COLORS.length];
+}
+
+type ClientStat = Client & {
+  total: number;
+  delivered: number;
+  inProgress: number;
+  late: number;
+  stageBreakdown: Array<{ stage: Stage; count: number }>;
+  clientCards: Card[];
+  clientCampaigns: Campaign[];
+};
+
+/* ─────────────────────────────────────────────────────────
+   ClientAnalyticsModal
+───────────────────────────────────────────────────────── */
+function ClientAnalyticsModal({
+  stat, open, onClose,
+}: {
+  stat: ClientStat | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [open, onClose]);
+
+  if (!stat) return null;
+
+  const PieMod = Pie as any;
+  const donutData = stat.stageBreakdown
+    .filter((s) => s.count > 0)
+    .map((s) => ({
+      name: stageLabels[s.stage],
+      value: s.count,
+      stageKey: s.stage,
+    }));
+
+  const color = clientSolidColor(stat.name);
+  const gradient = clientGradient(stat.name);
+  const initials = clientInitials(stat.name);
+
+  const kpis = [
+    { label: "Total de Tarefas", value: stat.total,      accent: "#8b5cf6", bg: "bg-violet-500/10 dark:bg-violet-500/10", border: "border-violet-400/30" },
+    { label: "Entregues",        value: stat.delivered,   accent: "#10b981", bg: "bg-emerald-500/10",                       border: "border-emerald-400/30" },
+    { label: "Em Andamento",     value: stat.inProgress,  accent: "#3b82f6", bg: "bg-blue-500/10",                          border: "border-blue-400/30" },
+    { label: "Atrasadas",        value: stat.late,        accent: "#ef4444", bg: "bg-red-500/10",                            border: "border-red-400/30" },
+  ];
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="client-overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            key="client-panel"
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[81] flex items-center justify-center p-4"
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/[0.10]"
+              style={{
+                pointerEvents: "auto",
+                background: "rgba(10,9,18,0.96)",
+                backdropFilter: "blur(32px)",
+                boxShadow: `0 0 0 1px rgba(255,255,255,0.05), 0 32px 80px rgba(0,0,0,0.75), 0 0 60px ${color}18`,
+              }}
+            >
+              {/* Gradient top stripe */}
+              <div className={`h-1 w-full rounded-t-3xl bg-gradient-to-r ${gradient}`} />
+
+              {/* Header */}
+              <div className="flex items-center gap-4 px-7 py-5 border-b border-white/[0.07]">
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-base shrink-0 shadow-lg`}>
+                  {initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-white leading-tight">{stat.name}</h2>
+                  <p className="text-xs text-white/40 mt-0.5">Relatório Analítico</p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.07]">
+
+                {/* Left: donut chart */}
+                <div className="p-6 flex flex-col gap-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/30">Tarefas por Estágio</p>
+                  {donutData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <defs>
+                            {donutData.map((entry) => (
+                              <linearGradient key={entry.stageKey} id={`cmod-${entry.stageKey}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%"   stopColor={STAGE_GRADIENTS[entry.stageKey][0]} stopOpacity={1} />
+                                <stop offset="100%" stopColor={STAGE_GRADIENTS[entry.stageKey][1]} stopOpacity={1} />
+                              </linearGradient>
+                            ))}
+                          </defs>
+                          <PieMod
+                            data={donutData}
+                            cx="50%" cy="50%"
+                            innerRadius={55} outerRadius={82}
+                            paddingAngle={4}
+                            dataKey="value"
+                            cornerRadius={6}
+                          >
+                            {donutData.map((entry, i) => (
+                              <Cell key={i} fill={`url(#cmod-${entry.stageKey})`} stroke="transparent" />
+                            ))}
+                          </PieMod>
+                          <RechartsTooltip
+                            formatter={(v) => [`${v} tarefas`, ""]}
+                            contentStyle={{ borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(18,18,28,0.97)", color: "#fff", fontSize: "12px" }}
+                            cursor={false}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Legend */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        {donutData.map((entry) => (
+                          <div key={entry.stageKey} className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STAGE_GRADIENTS[entry.stageKey][0] }} />
+                            <span className="text-xs text-white/50 truncate">{entry.name}</span>
+                            <span className="text-xs text-white/30 ml-auto">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center py-12">
+                      <p className="text-sm text-white/25 text-center">Nenhuma tarefa associada ainda.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: stats */}
+                <div className="p-6 flex flex-col gap-5">
+                  {/* KPI grid */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/30 mb-3">Resumo Geral</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {kpis.map((kpi) => (
+                        <div key={kpi.label} className={`rounded-2xl border ${kpi.border} ${kpi.bg} px-4 py-3`}>
+                          <p className="text-2xl font-bold" style={{ color: kpi.accent }}>{kpi.value}</p>
+                          <p className="text-[11px] text-white/40 leading-tight mt-0.5">{kpi.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campaigns */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/30 mb-2">Campanhas</p>
+                    {stat.clientCampaigns.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {stat.clientCampaigns.map((camp) => (
+                          <div key={camp.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: camp.color, boxShadow: `0 0 5px ${camp.color}80` }} />
+                            <span className="text-sm text-white/65 truncate">{camp.name}</span>
+                            <span className="ml-auto text-xs text-white/25 shrink-0">
+                              {stat.clientCards.filter((c) => c.campaignId === camp.id).length} tarefas
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white/25 px-1">Nenhuma campanha vinculada.</p>
+                    )}
+                  </div>
+
+                  {/* Recent tasks */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/30 mb-2">Últimas Tarefas</p>
+                    {stat.clientCards.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {stat.clientCards.slice(0, 5).map((card) => (
+                          <div key={card.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: STAGE_COLORS[card.stage] }} />
+                            <span className="text-sm text-white/65 truncate flex-1">{card.title}</span>
+                            <span className="text-[10px] font-semibold shrink-0" style={{ color: STAGE_COLORS[card.stage] }}>
+                              {stageLabels[card.stage]}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white/25 px-1">Nenhuma tarefa ainda.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
    Dashboard Page
 ───────────────────────────────────────────────────────── */
 export default function DashboardPage() {
@@ -598,6 +846,8 @@ export default function DashboardPage() {
   const [selectedDemand,    setSelectedDemand]    = useState<Card | null>(null);
   const [demandDetailOpen,  setDemandDetailOpen]  = useState(false);
   const [viewMode,          setViewMode]          = useState<"list" | "carousel">("list");
+  const [clientModalStat,   setClientModalStat]   = useState<ClientStat | null>(null);
+  const [clientModalOpen,   setClientModalOpen]   = useState(false);
   const carouselRef = React.useRef<HTMLDivElement>(null);
 
   const scrollCarousel = (dir: "left" | "right") => {
@@ -688,6 +938,22 @@ export default function DashboardPage() {
       });
   }, [cards]);
 
+  const clientStats = useMemo((): ClientStat[] => {
+    return clients.map((client) => {
+      const clientCards = cards.filter((c) => c.clientId === client.id);
+      const delivered   = clientCards.filter((c) => c.stage === "published" || c.approvalStatus === "approved").length;
+      const inProgress  = clientCards.filter((c) => c.stage !== "published" && c.approvalStatus !== "approved").length;
+      const late        = clientCards.filter((c) => c.stage !== "published" && c.approvalStatus !== "approved" && c.dueDate && isBefore(parseISO(c.dueDate), today)).length;
+      const stageBreakdown = (Object.keys(stageLabels) as Stage[]).map((stage) => ({
+        stage, count: clientCards.filter((c) => c.stage === stage).length,
+      }));
+      const seen = new Set<string>();
+      const campIds = clientCards.map((c) => c.campaignId).filter((id): id is string => !!id && !seen.has(id) && !!seen.add(id));
+      const clientCampaigns = campaigns.filter((camp) => campIds.includes(camp.id));
+      return { ...client, total: clientCards.length, delivered, inProgress, late, stageBreakdown, clientCards, clientCampaigns };
+    });
+  }, [clients, cards, campaigns, today]);
+
   const handleDemandClick = (card: Card) => {
     setSelectedDemand(card);
     setDemandDetailOpen(true);
@@ -703,6 +969,13 @@ export default function DashboardPage() {
         card={selectedDemand}
         open={demandDetailOpen}
         onOpenChange={setDemandDetailOpen}
+      />
+
+      {/* Client analytics modal */}
+      <ClientAnalyticsModal
+        stat={clientModalStat}
+        open={clientModalOpen}
+        onClose={() => setClientModalOpen(false)}
       />
 
       {/* Background com gradiente sutil */}
@@ -1149,6 +1422,126 @@ export default function DashboardPage() {
               </div>
             </GlassCard>
           </div>
+
+          {/* ── Visão por Cliente ───────────────────────── */}
+          {clientStats.length > 0 && (
+            <GlassCard>
+              <div className="p-5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Por Cliente</p>
+                  <p className="text-xs text-muted-foreground">Produção agrupada por cliente</p>
+                </div>
+              </div>
+
+              <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {clientStats.map((cs, i) => {
+                  const gradient = clientGradient(cs.name);
+                  const color    = clientSolidColor(cs.name);
+                  const initials = clientInitials(cs.name);
+                  const deliverPct = cs.total > 0 ? Math.round((cs.delivered / cs.total) * 100) : 0;
+
+                  return (
+                    <motion.div
+                      key={cs.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      className="group rounded-2xl border border-violet-100/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] overflow-hidden hover:border-violet-300/60 dark:hover:border-white/[0.14] transition-all shadow-sm hover:shadow-md"
+                    >
+                      {/* Gradient top strip */}
+                      <div className={`h-[3px] w-full bg-gradient-to-r ${gradient}`} />
+
+                      <div className="p-4 space-y-3.5">
+                        {/* Header row */}
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-md`}>
+                            {initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-zinc-900 dark:text-white/90 truncate leading-tight">{cs.name}</p>
+                            <p className="text-[11px] text-zinc-400 dark:text-white/30">{cs.total} {cs.total === 1 ? "tarefa" : "tarefas"}</p>
+                          </div>
+                          {cs.late > 0 && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-red-500/10 border border-red-400/30 text-red-500 dark:text-red-400 font-semibold shrink-0">
+                              {cs.late} atras.
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Stage stacked bar */}
+                        {cs.total > 0 ? (
+                          <div>
+                            <div className="flex w-full h-2 rounded-full overflow-hidden gap-px">
+                              {cs.stageBreakdown.filter((s) => s.count > 0).map((s) => (
+                                <div
+                                  key={s.stage}
+                                  title={`${stageLabels[s.stage]}: ${s.count}`}
+                                  className="h-full transition-all"
+                                  style={{
+                                    width: `${(s.count / cs.total) * 100}%`,
+                                    backgroundColor: STAGE_COLORS[s.stage],
+                                    minWidth: "4px",
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            {/* Entregue % */}
+                            <div className="flex items-center justify-between mt-1.5">
+                              <span className="text-[10px] text-zinc-400 dark:text-white/25">Entregues</span>
+                              <span className="text-[11px] font-semibold" style={{ color }}>{deliverPct}%</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-white/[0.05]" />
+                        )}
+
+                        {/* KPI chips row */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] px-2 py-0.5 rounded-lg border border-emerald-400/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                            ✓ {cs.delivered} entregues
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-lg border border-blue-400/25 bg-blue-500/08 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+                            {cs.inProgress} em andamento
+                          </span>
+                        </div>
+
+                        {/* Campaigns */}
+                        {cs.clientCampaigns.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {cs.clientCampaigns.slice(0, 3).map((camp) => (
+                              <span
+                                key={camp.id}
+                                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border font-medium"
+                                style={{ borderColor: `${camp.color}35`, color: camp.color, backgroundColor: `${camp.color}12` }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: camp.color }} />
+                                {camp.name}
+                              </span>
+                            ))}
+                            {cs.clientCampaigns.length > 3 && (
+                              <span className="text-[10px] text-zinc-400 dark:text-white/25">+{cs.clientCampaigns.length - 3}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* CTA */}
+                        <button
+                          onClick={() => { setClientModalStat(cs); setClientModalOpen(true); }}
+                          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-violet-200/60 dark:border-white/[0.09] bg-violet-50/60 dark:bg-white/[0.04] hover:bg-violet-100/80 dark:hover:bg-white/[0.08] hover:border-violet-300/60 dark:hover:border-white/[0.16] text-[11px] font-semibold text-violet-600 dark:text-violet-400 transition-all group-hover:border-violet-300/80 dark:group-hover:border-violet-500/30"
+                        >
+                          <TrendingUp className="w-3 h-3" />
+                          + Informações
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </GlassCard>
+          )}
 
         </div>
       </div>
