@@ -63,7 +63,7 @@ export interface Client {
 export interface Card {
   id: string;
   campaignId: string | null;
-  clientId: string | null;
+  clientId?: string | null;
   title: string;
   description: string;
   contentType: ContentType;
